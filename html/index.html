@@ -45,48 +45,54 @@
         </div>
       </div>
       <!-- TDM/DM selection  -->
-      <div class="create-container"></div>
+      <div class="create-container">
+        <!-- <h2 id="back-btn-select-map" class="close">< Back</h2>
+        <h2 class="title-text">Create a lobby</h2>
+        <div class="map-container">
+          <div class="map">
+            <div class="map-name-container"><span>Sandy Shores</span></div>
+          </div>
+          <div class="map">
+            <div class="map-name-container"><span>Sandy Shores</span></div>
+          </div>
+          <button id="confirm-dm-selection" class="confirm-dmatch-btn">Confirm</button>
+        </div> -->
+      </div>
       <!--end of TDM/DM selection  -->
-    </div>
-    <!-- HUD -->
-    <div id="toast-container">
-      <!-- <div class="toast toast-kill">
-        <span class="killer-name"> ${killer + " "}</span>
-        <img class="bullet-msg" src="assets/bullet.png" />
-        <span class="victim-name">${" " + victim}</span>
-      </div> -->
-    </div>
-    <div class="progress-bars">
-      <div class="stats-container">
-        <span id="armor-count"> 0</span>
-        <span id="health-count"> 0</span>
       </div>
-      <div class="bar-containers">
-        <div class="armor-progress-bar">
-          <div class="armor-progress"></div>
+      <!-- HUD -->
+      <div id="toast-container"></div>
+      <div class="progress-bars">
+        <div class="stats-container">
+          <span id="armor-count"> 0</span>
+          <span id="health-count"> 0</span>
         </div>
-        <div class="health-progress-bar">
-          <div id="health-bar" class="health-progress"></div>
+        <div class="bar-containers">
+          <div class="armor-progress-bar">
+            <div class="armor-progress"></div>
+          </div>
+          <div class="health-progress-bar">
+            <div id="health-bar" class="health-progress"></div>
+          </div>
+        </div>
+        <div class="ammo-container">
+          <span id="clip-ammo"></span>
+          <span id="total-ammo"></span>
         </div>
       </div>
-      <div class="ammo-container">
-        <span id="clip-ammo"></span>
-        <span id="total-ammo"></span>
+      <div class="kd-numbers">
+        <img class="kd-image" src="assets/kill-count.png" alt="" />
+        <span id="kill-count" class="kd-number">10</span><br />
+        <img class="kd-image" src="assets/death-count.png" alt="" />
+        <span id="death-count" class="kd-number">10</span>
       </div>
-    </div>
-    <div class="kd-numbers">
-      <img class="kd-image" src="assets/kill-count.png" alt="" />
-      <span id="kill-count" class="kd-number">10</span><br />
-      <img class="kd-image" src="assets/death-count.png" alt="" />
-      <span id="death-count" class="kd-number">10</span>
-    </div>
-    <div class="timer-container">
-      <div class="v-line"></div>
-    <div class="match-timer">
-      <span class="clock"><img src="assets/timer.svg"/></span>
-      <p id="timer" class="timer">00:53</p>
-    </div>
-  </div>
+      <div class="timer-container">
+        <div class="v-line"></div>
+        <div class="match-timer">
+          <span class="clock"><img src="assets/timer.svg" /></span>
+          <p id="timer" class="timer">00:00</p>
+        </div>
+      </div>
     </div>
   </body>
   <script src="script.js" type="text/javascript"></script>

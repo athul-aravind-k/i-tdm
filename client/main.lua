@@ -256,13 +256,11 @@ RegisterNUICallback('close', function(_, cb)
 end)
 
 RegisterNUICallback('startDeathMatch', function(data, cb)
-    print('from nui ', data.selectedMap)
     startDeathMatch(data.selectedMap)
     cb("ok")
 end)
 
 RegisterNUICallback('get-maps', function(data, cb)
-    local payload = {}
     local maps = {}
     if data.isTdm then
         for _, v in pairs(Config.TDM_maps) do
@@ -270,12 +268,14 @@ RegisterNUICallback('get-maps', function(data, cb)
         end
     else
         for _, v in pairs(Config.DM_maps) do
-            maps[#maps + 1] = v.name
+            maps[#maps + 1] = {
+                name = v.name,
+                label = v.label,
+                image = v.image
+            }
         end
     end
-    print('send to nui', maps[2])
-    payload.maps = maps
-    cb(payload)
+    cb(maps)
 end)
 
 RegisterNUICallback('join-dm', function(data, cb)
@@ -355,14 +355,12 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 local attackerPlayerId = NetworkGetPlayerIndexFromPed(attacker)
                 if victimPlayerId == PlayerId() and IsEntityDead(localPlayerPed) and IsEntityAPed(attacker) then
                     DMDeaths = DMDeaths + 1
-                    print('deaths ' .. DMDeaths)
                 elseif attackerPlayerId == PlayerId() and IsEntityDead(victim) and IsEntityAPed(victim) then
                     TriggerServerEvent('i-tdm:server:send-kill-msg', GetPlayerName(attackerPlayerId),
                         GetPlayerName(victimPlayerId), currDmap,
                         activeMatchId)
                     DMKills = DMKills + 1
                     setPedProperties()
-                    print('killed ' .. DMKills)
                 end
             end
         end

@@ -1,4 +1,5 @@
 var isCreator = false;
+var selectedMap = null;
 
 $(function () {
   window.addEventListener("message", function (event) {
@@ -37,68 +38,23 @@ function openUi(bool) {
     }, 100);
     $.post("https://i-tdm/close");
   }
+  selectedMap = null;
 }
 
 function setupCreateMatchScreen(maps, isTdm) {
-  //create ui here
-  openUi(false);
   if (isTdm) {
     console.log("TDM");
   } else {
-    selectedMap = maps[1];
-    $.post(
-      "https://i-tdm/startDeathMatch",
-      JSON.stringify({ selectedMap, isCreator }),
-      function (data) {
-        //load HUD here
-      }
-    );
+    showMaps(maps);
   }
 }
 
 $(document).on("click", "#create-btn", function (e) {
-  var cardsHTML = `
-  <h2 id="back-btn-join" class="close">< Back</h2>
-    <div class="card tdm-card">
-      <h2 class="card-title">Team Death Match</h2>
-      <button id="create-tdm" class="card-btn tdm-button">Select</button>
-      <img class="card-bottom-image create-card-image" src="assets/teamdeathmatch.png" alt="" />
-    </div>
-    <div class="card death-card">
-      <h2 class="card-title">Death Match</h2>
-      <button id="create-dm" class="card-btn dm-button">Select</button>
-      <img class="card-bottom-image join-card-image" src="assets/deathmatch-card.png" alt="" />
-    </div>
-    <div class="card coming-soon-card">
-      <h2 class="coming-soon">coming soon..</h2>
-    </div>
-  `;
-  $(".create-container").append(cardsHTML);
-  $(".create-container").css("display", "flex");
-  $(".card-container").css("display", "none");
-  isCreator = true;
+  showCreateOptions();
 });
 
 $(document).on("click", "#join-btn", function (e) {
-  var cardsHTML = `
-  <h2 id="back-btn-join" class="close">< Back</h2>
-    <div class="card tdm-card">
-      <h2 class="card-title">Team Death Match</h2>
-      <button id="join-tdm" class="card-btn tdm-button">Select</button>
-      <img class="card-bottom-image create-card-image" src="assets/teamdeathmatch.png" alt="" />
-    </div>
-    <div class="card death-card">
-      <h2 class="card-title">Death Match</h2>
-      <button id="join-dm" class="card-btn dm-button">Select</button>
-      <img class="card-bottom-image join-card-image" src="assets/deathmatch-card.png" alt="" />
-    </div>
-    <div class="card coming-soon-card">
-      <h2 class="coming-soon">coming soon..</h2>
-    </div>
-  `;
-  $(".create-container").append(cardsHTML);
-  $(".create-container").css("display", "flex");
-  $(".card-container").css("display", "none");
+  showJoinOptions();
 });
 
 $(document).on("click", "#leader-board-btn", function (e) {
@@ -150,7 +106,7 @@ $(document).on("click", "#create-dm", function (e) {
     "https://i-tdm/get-maps",
     JSON.stringify({ isTdm: false }),
     function (data) {
-      setupCreateMatchScreen(data.maps, false);
+      setupCreateMatchScreen(data, false);
     }
   );
 });
@@ -172,7 +128,28 @@ $(document).on("keydown", function () {
   }
 });
 
-// document.addEventListener("DOMContentLoaded", function () {
+$(document).on("click", ".map-name-container", function (e) {
+  $(".map-name-container").removeClass("map-name-container-selected");
+  $(this).addClass("map-name-container-selected");
+  var map = $(this).attr("data-name");
+  selectedMap = map;
+});
+
+$(document).on("click", "#back-btn-select-map", function (e) {
+  $(".create-container").empty();
+  showCreateOptions();
+});
+
+$(document).on("click", "#confirm-dm-selection", function (e) {
+  $.post(
+    "https://i-tdm/startDeathMatch",
+    JSON.stringify({ selectedMap }),
+    function (data) {
+      openUi(false);
+    }
+  );
+});
+
 var messageQueue = []; // Array to hold queued messages
 
 function showToast(killer, victim, type) {
@@ -227,7 +204,6 @@ function showKillToast(data) {
     }
   }, 5000);
 }
-// });
 
 function toggleHud(bool, time) {
   if (bool) {
@@ -323,4 +299,68 @@ function toggleTimer(bool, time) {
     $("#timer").css("color", "white");
     clearTimeout(x);
   }
+}
+
+function showMaps(maps) {
+  var container = `<h2 class="title-text">Create a lobby</h2>
+  <h2 id="back-btn-select-map" class="close"> < Back</h2>
+  <div class="map-container">`;
+  if (maps.length) {
+    for (i = 0; i <= maps.length - 1; i++) {
+      var map = `<div class="map" style="background-image: url(assets/maps/${maps[i].image});">
+      <div class="map-name-container" data-name="${maps[i].name}"><span>${maps[i].label}</span></div>
+    </div>`;
+      container += map;
+    }
+  }
+  container += `<button id="confirm-dm-selection" class="confirm-dmatch-btn">Confirm</button></div>`;
+  $(".create-container").empty();
+  $(".create-container").append(container);
+  $(".create-container").css("display", "flex");
+  $(".card-container").css("display", "none");
+}
+
+function showCreateOptions() {
+  var cardsHTML = `
+  <h2 id="back-btn-join" class="close">< Back</h2>
+    <div class="card tdm-card">
+      <h2 class="card-title">Team Death Match</h2>
+      <button id="create-tdm" class="card-btn tdm-button">Select</button>
+      <img class="card-bottom-image create-card-image" src="assets/teamdeathmatch.png" alt="" />
+    </div>
+    <div class="card death-card">
+      <h2 class="card-title">Death Match</h2>
+      <button id="create-dm" class="card-btn dm-button">Select</button>
+      <img class="card-bottom-image join-card-image" src="assets/deathmatch-card.png" alt="" />
+    </div>
+    <div class="card coming-soon-card">
+      <h2 class="coming-soon">coming soon..</h2>
+    </div>
+  `;
+  $(".create-container").append(cardsHTML);
+  $(".create-container").css("display", "flex");
+  $(".card-container").css("display", "none");
+  isCreator = true;
+}
+
+function showJoinOptions() {
+  var cardsHTML = `
+  <h2 id="back-btn-join" class="close">< Back</h2>
+    <div class="card tdm-card">
+      <h2 class="card-title">Team Death Match</h2>
+      <button id="join-tdm" class="card-btn tdm-button">Select</button>
+      <img class="card-bottom-image create-card-image" src="assets/teamdeathmatch.png" alt="" />
+    </div>
+    <div class="card death-card">
+      <h2 class="card-title">Death Match</h2>
+      <button id="join-dm" class="card-btn dm-button">Select</button>
+      <img class="card-bottom-image join-card-image" src="assets/deathmatch-card.png" alt="" />
+    </div>
+    <div class="card coming-soon-card">
+      <h2 class="coming-soon">coming soon..</h2>
+    </div>
+  `;
+  $(".create-container").append(cardsHTML);
+  $(".create-container").css("display", "flex");
+  $(".card-container").css("display", "none");
 }

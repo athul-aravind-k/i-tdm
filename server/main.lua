@@ -53,18 +53,14 @@ QBCore.Functions.CreateCallback('i-tdm:check-match-validity', function(source, c
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:get-time', function(source, cb, map, matchId)
-    print(map)
-    print(matchId)
     local endTime = Dmaps[map].activeMatches[matchId].endingTime
     local curTime = os.time()
     local timeLeft = (math.floor(math.abs(endTime - curTime))) * 1000
-    print(timeLeft)
     cb(timeLeft)
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb, map, bucketId)
     local creator = GetPlayerName(source)
-    print(creator)
     local DMTimeInMs = Config.DMTime * 60 * 1000
     local endingTime = os.time() + (DMTimeInMs / 1000)
     local id = #Dmaps[map].activeMatches + 1

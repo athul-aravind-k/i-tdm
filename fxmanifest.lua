@@ -24,7 +24,8 @@ files {
     'html/*.html',
     'html/*.css',
     'html/*.js',
-    'html/assets/*.*'
+    'html/assets/*.*',
+    'html/assets/maps/*.*'
 }
 
 ui_page {

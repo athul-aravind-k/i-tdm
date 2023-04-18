@@ -10,7 +10,7 @@ Config.startPed = {
     maxZ = 29.29,
 }
 
-Config.DMTime = 1 --minutes
+Config.DMTime = 10 --minutes
 
 Config.TDM_maps = {
     ['map1'] = {
@@ -69,6 +69,7 @@ Config.DM_maps = {
     ['map1'] = {
         name = 'map1',
         label = 'Map 1',
+        image = 'sandy.png',
         zone = {
             zones = {
                 vector2(-330.05981445312, 3807.1208496094),
@@ -100,6 +101,7 @@ Config.DM_maps = {
     ['map2'] = {
         name = 'map2',
         label = 'Map 2 ',
+        image = 'sandy.png',
         zone = {
             zones = {
                 vector2(3469.8298339844, 3764.4143066406),
