@@ -11,8 +11,10 @@ insideDmz = false
 InMatch = false
 inTDM = false
 inDMatch = false
-
-
+local currBucket
+local activeMatchId
+local DMKills = 0
+local DMDeaths = 0
 
 --hoping tha this shit works and moving onn :(
 local function getRandomLocation(variable)
@@ -32,7 +34,6 @@ local function createSpawnBlip()
 end
 
 local function createDeathMatchZone(map)
-    print(map)
     local selectedMap = Config.DM_maps[map]
     deathMatchZone = PolyZone:Create(selectedMap.zone.zones, {
         name = selectedMap.zone.name,
@@ -50,6 +51,15 @@ local function createDeathMatchZone(map)
     end)
 end
 
+local function setPedProperties()
+    local ped = PlayerPedId()
+    GiveWeaponToPed(ped, 0xAF113F99, 200, false, false)
+    GiveWeaponToPed(ped, 0xFAD1F1C9, 200, false, true)
+    TriggerServerEvent('hud:server:RelieveStress', 100)
+    SetPedArmour(ped, 100)
+    SetEntityHealth(ped, 200)
+end
+
 local function spawnToRandomPosDm(map)
     ped = PlayerPedId()
     local selectedMap = Config.DM_maps[map]
@@ -57,31 +67,83 @@ local function spawnToRandomPosDm(map)
     local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
     local heading = GetEntityHeading(ped)
     NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z + 0.5, heading, true, false)
-    SetPedArmour(ped, 100)
-    GiveWeaponToPed(ped, 0xAF113F99, 200, false, false)
-    GiveWeaponToPed(ped, 0xFAD1F1C9, 200, false, true)
-    SetEntityCoords(ped, spawnPoint)
+    setPedProperties()
+    SetEntityCoords(ped, spawnPoint, false, false, false, false)
+end
+
+local function toggleHud(bool, time)
+    SendNUIMessage({
+        type = 'toggle-hud',
+        message = {
+            bool = bool,
+            time = time
+        }
+    })
+end
+
+local function sendToDmatchMap(map, matchId, bucketId)
+    QBCore.Functions.TriggerCallback('i-tdm:check-match-validity', function(bool)
+        if bool then
+            local ped = PlayerPedId()
+            inDMatch = true
+            InMatch = true
+            createDeathMatchZone(map)
+            TriggerEvent('i-tdm:toggle-ambulance-job', false)
+            TriggerServerEvent('i-tdm:server:set-bucket', bucketId)
+            TriggerServerEvent('i-tdm:server:add-participant', map, matchId)
+            activeMatchId = matchId
+            local selectedMap = Config.DM_maps[map]
+            local spawnPoints = selectedMap.spawnpoints
+            local spawnPoint = spawnPoints[math.random(0, #spawnPoints)]
+            QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
+                SwitchOutPlayer(ped, 0, 1)
+                Citizen.Wait(2000)
+                setPedProperties()
+                SetEntityCoords(ped, spawnPoint, false, false, false, false)
+                Citizen.Wait(2000)
+                SwitchInPlayer(ped)
+                toggleHud(true, timeLeft)
+            end, map, matchId)
+        else
+            QBCore.Functions.Notify('match doesnt exist', 'error', 2000)
+        end
+    end, map, matchId)
 end
 
 local function startDeathMatch(map)
-    inDMatch = true
-    InMatch = true
     currDmap = map
-    local ped = PlayerPedId()
-    GiveWeaponToPed(ped, 0xAF113F99, 200, false, false)
-    GiveWeaponToPed(ped, 0xFAD1F1C9, 200, false, true)
-    SetPedArmour(ped, 100)
-    SetEntityHealth(ped, 200)
-    TriggerEvent('i-tdm:toggle-ambulance-job', false)
-    createDeathMatchZone(map)
-    local selectedMap = Config.DM_maps[map]
-    local spawnPoints = selectedMap.spawnpoints
-    local spawnPoint = spawnPoints[math.random(0, #spawnPoints)]
-    SwitchOutPlayer(PlayerPedId(), 0, 1)
-    Citizen.Wait(2000)
-    SetEntityCoords(ped, spawnPoint)
-    Citizen.Wait(2000)
-    SwitchInPlayer(PlayerPedId())
+    currBucket = GetEntityPopulationType(GetEntityCoords(ped))
+    QBCore.Functions.TriggerCallback('i-tdm:get-new-bucketId', function(bucketId)
+        QBCore.Functions.TriggerCallback('i-tdm:server:createMatch', function(matchId)
+            activeMatchId = matchId
+            sendToDmatchMap(map, matchId, bucketId)
+        end, map, bucketId)
+    end)
+end
+
+local function showKillMessage(killer, killed, type)
+    SendNUIMessage({
+        type = "kill-msg",
+        message = {
+            killer = killer,
+            killed = killed,
+            type = type
+        }
+    })
+end
+
+local function updateHealthStats(hp, armor, ammo, clip)
+    SendNUIMessage({
+        type = "update-stats",
+        message = {
+            hp = hp,
+            armor = armor,
+            ammo = ammo,
+            clip = clip,
+            kills = DMKills,
+            deaths = DMDeaths
+        }
+    })
 end
 
 local function createZones(mapName)
@@ -125,6 +187,7 @@ end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     RemoveBlip(startBlip)
+    TriggerEvent('i-tdm:client:stop-dm')
 end)
 
 RegisterNetEvent('i-tdm:client:open-menu', function()
@@ -138,10 +201,13 @@ end)
 RegisterNetEvent('i-tdm:client:stop-dm', function()
     if inDMatch then
         local ped = PlayerPedId()
+        toggleHud(false, 0)
         SwitchOutPlayer(ped, 0, 1)
         Citizen.Wait(2000)
         NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
-        SetEntityCoords(ped, Config.startPed.pos)
+        TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
+        currBucket = nil
+        SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
         RemoveWeaponFromPed(ped, 0xAF113F99)
         RemoveWeaponFromPed(ped, 0xFAD1F1C9)
         Citizen.Wait(2000)
@@ -150,9 +216,38 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         InMatch = false
         deathMatchZone:destroy()
         TriggerEvent('i-tdm:toggle-ambulance-job', true)
+        TriggerServerEvent('i-tdm:server:remove-participant', currDmap, activeMatchId)
+        currDmap = nil
+        activeMatchId = nil
     else
         QBCore.Functions.Notify('you are not in a match', 'error', 2000)
     end
+end)
+
+RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
+    pedId = PlayerId()
+    local localPlayerName = GetPlayerName(pedId)
+    if (killerName == localPlayerName) then
+        showKillMessage(killerName, victimName, 'killed')
+    elseif (victimName == localPlayerName) then
+        showKillMessage(killerName, victimName, 'dead')
+    elseif (killerName == victimName) then
+        showKillMessage(killerName, victimName, 'suicide')
+    else
+        showKillMessage(killerName, victimName, 'other')
+    end
+end)
+
+
+-- RegisterNetEvent('i-tdm:client:set-creator-matchid', function(id)
+--     activeMatchId = id
+-- end)
+
+AddEventHandler('onResourceStart', function(resource)
+    if (GetCurrentResourceName() ~= resource) then
+        return
+    end
+    createSpawnBlip()
 end)
 
 RegisterNUICallback('close', function(_, cb)
@@ -161,6 +256,7 @@ RegisterNUICallback('close', function(_, cb)
 end)
 
 RegisterNUICallback('startDeathMatch', function(data, cb)
+    print('from nui ', data.selectedMap)
     startDeathMatch(data.selectedMap)
     cb("ok")
 end)
@@ -177,8 +273,20 @@ RegisterNUICallback('get-maps', function(data, cb)
             maps[#maps + 1] = v.name
         end
     end
+    print('send to nui', maps[2])
     payload.maps = maps
     cb(payload)
+end)
+
+RegisterNUICallback('join-dm', function(data, cb)
+    sendToDmatchMap(data.map, data.matchId, data.bucketId)
+    activeMatchId = data.matchId
+    currDmap = data.map
+    cb(true)
+end)
+
+RegisterNUICallback('join-tdm', function(data, cb)
+    --tdm join logic
 end)
 
 CreateThread(function()
@@ -224,10 +332,9 @@ CreateThread(function()
     while true do
         if inDMatch then
             local ped = PlayerPedId()
-            -- SetPedSuffersCriticalHits(ped) test this
+            SetPedSuffersCriticalHits(ped)
             if IsEntityDead(ped) then
-                Wait(5000)
-                SetEntityHealth(ped, 200)
+                Wait(2000)
                 spawnToRandomPosDm(currDmap)
             end
         end
@@ -235,35 +342,46 @@ CreateThread(function()
     end
 end)
 
--- AddEventHandler('CEventNetworkEntityDamage', function(attacker, weaponHash, damageAmt, boneIndex, entity)
---     -- Handle the event here
-
---     if boneIndex == 8 then
---         print("Headshot!")
---     else
---         print("Not a headshot.")
---     end
--- end)
-
 AddEventHandler('gameEventTriggered', function(event, data)
     if inDMatch then
         if event == "CEventNetworkEntityDamage" then
             local victim, attacker, victimDied, weapon = data[1], data[2], data[4], data[7]
-            if not IsEntityAPed(victim) then return end
-            if victimDied and NetworkGetPlayerIndexFromPed(victim) == PlayerId() and IsEntityDead(PlayerPedId()) then
-                local playerid = NetworkGetPlayerIndexFromPed(victim)
-                local playerName = GetPlayerName(playerid)
-                local killerId = NetworkGetPlayerIndexFromPed(attacker)
-                local killerName = GetPlayerName(killerId)
-                local weaponLabel = QBCore.Shared.Weapons[weapon].label or 'Unknown'
-                local weaponName = QBCore.Shared.Weapons[weapon].name or 'Unknown'
-                print(killerName .. ' killed ' .. playerName .. ' with ' .. weaponLabel)
-                print(' (' .. json.encode(data) .. ')')
+            if not IsPedAPlayer(victim) then
+                return
+            end
+            if victimDied then
+                local localPlayerPed = PlayerPedId()
+                local victimPlayerId = NetworkGetPlayerIndexFromPed(victim)
+                local attackerPlayerId = NetworkGetPlayerIndexFromPed(attacker)
+                if victimPlayerId == PlayerId() and IsEntityDead(localPlayerPed) and IsEntityAPed(attacker) then
+                    DMDeaths = DMDeaths + 1
+                    print('deaths ' .. DMDeaths)
+                elseif attackerPlayerId == PlayerId() and IsEntityDead(victim) and IsEntityAPed(victim) then
+                    TriggerServerEvent('i-tdm:server:send-kill-msg', GetPlayerName(attackerPlayerId),
+                        GetPlayerName(victimPlayerId), currDmap,
+                        activeMatchId)
+                    DMKills = DMKills + 1
+                    setPedProperties()
+                    print('killed ' .. DMKills)
+                end
             end
         end
     end
 end)
 
-
-
-exports('getTDMstatus', function() return InMatch end)
+Citizen.CreateThread(function()
+    while true do
+        Wait(0)
+        if inDMatch then
+            local ped = PlayerPedId()
+            local hp = GetEntityHealth(ped)
+            local armor = GetPedArmour(ped)
+            local weapon = GetSelectedPedWeapon(ped)
+            local ammotype = GetPedAmmoTypeFromWeapon(ped, weapon)
+            local ammo = GetPedAmmoByType(ped, ammotype)
+            local _, clip = GetAmmoInClip(ped, weapon)
+            local totalAmmo = ammo - clip
+            updateHealthStats(hp, armor, totalAmmo, clip)
+        end
+    end
+end)
