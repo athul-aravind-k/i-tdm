@@ -70,6 +70,7 @@ Config.DM_maps = {
         name = 'map1',
         label = 'Calafia Track',
         image = 'calafia.png',
+        maxMembers = 10,
         zone = {
             zones = {
                 vector2(-330.05981445312, 3807.1208496094),
@@ -102,6 +103,7 @@ Config.DM_maps = {
         name = 'map2',
         label = 'Humane Labs',
         image = 'humane.png',
+        maxMembers = 15,
         zone = {
             zones = {
                 vector2(3469.8298339844, 3764.4143066406),

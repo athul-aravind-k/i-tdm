@@ -6,13 +6,13 @@
 }
 
 div {
-  -ms-overflow-style: none; /* for Internet Explorer, Edge */
-  scrollbar-width: none; /* for Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   overflow-y: scroll;
 }
 
 div::-webkit-scrollbar {
-  display: none; /* for Chrome, Safari, and Opera */
+  display: none;
 }
 
 .popup {
@@ -50,6 +50,7 @@ div::-webkit-scrollbar {
   border: 0.5px solid #ffffff;
   border-radius: 16px;
   overflow: hidden;
+  color: #ffffff;
 }
 
 .card-bg {
@@ -347,4 +348,73 @@ div::-webkit-scrollbar {
   position: absolute;
   top: 50%;
   right: -650%;
+}
+
+.match-container {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 85%;
+  height: 80%;
+  display: flex;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: 80%;
+}
+
+.match {
+  width: 100%;
+  min-height: 17%;
+  margin-top: 2%;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  border: 1px solid #00d1ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.match:hover {
+  box-shadow: 0px 0px 9px #00d1ff;
+}
+
+.match-items {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  color: white;
+  margin-left: 2rem;
+}
+
+.match-contents {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 20%;
+}
+
+.match-text {
+  margin-left: 1rem;
+}
+
+.match-select-btn {
+  border: 1px solid #01ccff;
+  border-radius: 8px;
+  color: white;
+  background-color: #ffd81700;
+  font-weight: 800;
+  font-size: 20px;
+  width: 60%;
+  height: 50%;
+  margin-left: 3rem;
+}
+
+.match-select-btn:hover {
+  background: linear-gradient(90deg, #01d0ff 2.78%, #0168ff 97.02%);
+  box-shadow: 0px 0px 25px #00d1ff;
 }

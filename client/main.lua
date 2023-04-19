@@ -82,6 +82,8 @@ local function toggleHud(bool, time)
 end
 
 local function sendToDmatchMap(map, matchId, bucketId)
+    local mId = tonumber(matchId)
+    local bId = tonumber(bucketId)
     QBCore.Functions.TriggerCallback('i-tdm:check-match-validity', function(bool)
         if bool then
             local ped = PlayerPedId()
@@ -89,9 +91,9 @@ local function sendToDmatchMap(map, matchId, bucketId)
             InMatch = true
             createDeathMatchZone(map)
             TriggerEvent('i-tdm:toggle-ambulance-job', false)
-            TriggerServerEvent('i-tdm:server:set-bucket', bucketId)
-            TriggerServerEvent('i-tdm:server:add-participant', map, matchId)
-            activeMatchId = matchId
+            TriggerServerEvent('i-tdm:server:set-bucket', bId)
+            TriggerServerEvent('i-tdm:server:add-participant', map, mId)
+            activeMatchId = mId
             local selectedMap = Config.DM_maps[map]
             local spawnPoints = selectedMap.spawnpoints
             local spawnPoint = spawnPoints[math.random(0, #spawnPoints)]
@@ -103,7 +105,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
                 Citizen.Wait(2000)
                 SwitchInPlayer(ped)
                 toggleHud(true, timeLeft)
-            end, map, matchId)
+            end, map, mId)
         else
             QBCore.Functions.Notify('match doesnt exist', 'error', 2000)
         end
@@ -276,6 +278,12 @@ RegisterNUICallback('get-maps', function(data, cb)
         end
     end
     cb(maps)
+end)
+
+RegisterNUICallback('get-active-matches', function(data, cb)
+    QBCore.Functions.TriggerCallback('i-tdm:get-active-matches', function(matches)
+        cb(matches)
+    end)
 end)
 
 RegisterNUICallback('join-dm', function(data, cb)

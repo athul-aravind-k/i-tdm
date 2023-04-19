@@ -73,22 +73,6 @@ $(document).on("click", "#back-btn-join", function (e) {
   $(".card-container").css("display", "flex");
 });
 
-$(document).on("click", "#join-dm", function (e) {
-  // show active matches
-  //change hardcode
-  openUi(false);
-
-  $.post(
-    "https://i-tdm/join-dm",
-    JSON.stringify({ map: "map2", matchId: 1, bucketId: 2 }),
-    function (data) {
-      if (data) {
-        // load hud here
-      }
-    }
-  );
-});
-
 $(document).on("click", "#join-tdm", function (e) {
   // show TDM maps
   //change hardcode
@@ -151,6 +135,32 @@ $(document).on("click", "#confirm-dm-selection", function (e) {
       }
     );
   }
+});
+
+$(document).on("click", "#join-dm", function (e) {
+  $.post("https://i-tdm/get-active-matches", {}, function (matches) {
+    showActiveMatches(matches);
+  });
+});
+
+$(document).on("click", ".match-select-btn", function (e) {
+  var map = $(this).attr("data-map");
+  var matchId = $(this).attr("data-matchId");
+  var bucketId = $(this).attr("data-bucketId");
+  openUi(false);
+  $.post(
+    "https://i-tdm/join-dm",
+    JSON.stringify({ map: map, matchId: String(matchId), bucketId: bucketId }),
+    function (data) {
+      if (data) {
+      }
+    }
+  );
+});
+
+$(document).on("click", "#back-btn-select-match", function (e) {
+  $(".create-container").empty();
+  showJoinOptions();
 });
 
 var messageQueue = []; // Array to hold queued messages
@@ -364,6 +374,43 @@ function showJoinOptions() {
     </div>
   `;
   $(".create-container").append(cardsHTML);
+  $(".create-container").css("display", "flex");
+  $(".card-container").css("display", "none");
+}
+
+function showActiveMatches(matches) {
+  var container = `<h2 id="back-btn-select-match" class="close">< Back</h2>
+  <h2 class="title-text">Active lobbies</h2>`;
+  if (matches.length) {
+    container += `<div class="match-container">`;
+
+    for (i = 0; i <= matches.length - 1; i++) {
+      var timer = new Date().getTime() + matches[i].endingTime;
+      var now = new Date().getTime();
+      var t = timer - now;
+      var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
+      var seconds = Math.floor((t % (1000 * 60)) / 1000);
+      var timeLeft = minutes + " : " + seconds;
+      var truncatedCreator = matches[i].creator.substring(0, 12);
+      var memberCount = matches[i].members + "/" + matches[i].maxMembers;
+      var dynamicMatch = `
+      <div class="match">
+        <div class="match-items">
+          <div class="match-contents"><img src="assets/loc-pin.svg" alt=""><span class="match-map match-text">${matches[i].mapLabel}</span></div>
+          <div class="match-contents"><img src="assets/crown.svg" alt=""><span class="creator-name match-text">${truncatedCreator}</span></div>
+          <div class="match-contents"><img src="assets/clock-match.svg" alt=""><span class="match-time  match-text">${timeLeft}</span></div>
+          <div class="match-contents"><img src="assets/members.svg" alt=""><span class="match-members  match-text">${memberCount}</span></div>
+          <div class="match-contents match-btn-container"><button class="match-select-btn" data-map="${matches[i].map}" data-matchId="${matches[i].matchId}" data-bucketId="${matches[i].bucketId}">Join</button></div>
+        </div>
+      </div> `;
+      container += dynamicMatch;
+    }
+    container += `</div>`;
+  } else {
+    container += `<div class="no-match">No Active Matches Found</div>`;
+  }
+  $(".create-container").empty();
+  $(".create-container").append(container);
   $(".create-container").css("display", "flex");
   $(".card-container").css("display", "none");
 }

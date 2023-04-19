@@ -124,6 +124,7 @@
 }
 
 .kd-numbers {
+  font-style: normal;
   display: none;
   position: fixed;
   bottom: 12rem;

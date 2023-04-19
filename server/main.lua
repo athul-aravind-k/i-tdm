@@ -45,7 +45,7 @@ QBCore.Functions.CreateCallback('i-tdm:get-new-bucketId', function(source, cb)
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:check-match-validity', function(source, cb, map, matchId)
-    if Dmaps[map].activeMatches[matchId] then
+    if Dmaps[map].activeMatches[tonumber(matchId)] then
         cb(true)
     else
         cb(false)
@@ -73,6 +73,27 @@ QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb,
     }
     TriggerClientEvent('i-tdm:client:set-creator-matchid', source, id)
     cb(id)
+end)
+
+QBCore.Functions.CreateCallback('i-tdm:get-active-matches', function(source, cb)
+    local activeMatches = {}
+    for _, v in pairs(Config.DM_maps) do
+        for key, val in pairs(Dmaps[v.name].activeMatches) do
+            if Dmaps[v.name].activeMatches[key] ~= nil then
+                activeMatches[#activeMatches + 1] = {
+                    matchId = val.id,
+                    map = v.name,
+                    bucketId = val.bucketId,
+                    endingTime = val.endingTime,
+                    members = #val.participants,
+                    creator = val.creator,
+                    mapLabel = v.label,
+                    maxMembers = v.maxMembers
+                }
+            end
+        end
+    end
+    cb(activeMatches)
 end)
 
 
