@@ -137,17 +137,20 @@ $(document).on("click", ".map-name-container", function (e) {
 
 $(document).on("click", "#back-btn-select-map", function (e) {
   $(".create-container").empty();
+  selectedMap = null;
   showCreateOptions();
 });
 
 $(document).on("click", "#confirm-dm-selection", function (e) {
-  $.post(
-    "https://i-tdm/startDeathMatch",
-    JSON.stringify({ selectedMap }),
-    function (data) {
-      openUi(false);
-    }
-  );
+  if (selectedMap) {
+    $.post(
+      "https://i-tdm/startDeathMatch",
+      JSON.stringify({ selectedMap }),
+      function (data) {
+        openUi(false);
+      }
+    );
+  }
 });
 
 var messageQueue = []; // Array to hold queued messages

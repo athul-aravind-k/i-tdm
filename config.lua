@@ -68,8 +68,8 @@ Config.TDM_maps = {
 Config.DM_maps = {
     ['map1'] = {
         name = 'map1',
-        label = 'Map 1',
-        image = 'sandy.png',
+        label = 'Calafia Track',
+        image = 'calafia.png',
         zone = {
             zones = {
                 vector2(-330.05981445312, 3807.1208496094),
@@ -100,8 +100,8 @@ Config.DM_maps = {
     },
     ['map2'] = {
         name = 'map2',
-        label = 'Map 2 ',
-        image = 'sandy.png',
+        label = 'Humane Labs',
+        image = 'humane.png',
         zone = {
             zones = {
                 vector2(3469.8298339844, 3764.4143066406),
