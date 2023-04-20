@@ -46,9 +46,11 @@ end)
 
 QBCore.Functions.CreateCallback('i-tdm:check-match-validity', function(source, cb, map, matchId)
     if Dmaps[map].activeMatches[tonumber(matchId)] then
-        cb(true)
+        if Config.DM_maps[map].maxMembers < #Dmaps[map].activeMatches.participants then
+            cb(true, true)
+        end
     else
-        cb(false)
+        cb(false, false)
     end
 end)
 
@@ -80,11 +82,13 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches', function(source, cb)
     for _, v in pairs(Config.DM_maps) do
         for key, val in pairs(Dmaps[v.name].activeMatches) do
             if Dmaps[v.name].activeMatches[key] ~= nil then
+                local curTime = os.time()
+                local timeLeft = (math.floor(math.abs(val.endingTime - curTime))) * 1000
                 activeMatches[#activeMatches + 1] = {
                     matchId = val.id,
                     map = v.name,
                     bucketId = val.bucketId,
-                    endingTime = val.endingTime,
+                    timeLeft = timeLeft,
                     members = #val.participants,
                     creator = val.creator,
                     mapLabel = v.label,
@@ -117,8 +121,8 @@ CreateThread(function()
                             print('stopping for ' .. participants[i])
                             TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
                             table.remove(participants, i)
-                            Dmaps[v.name].activeMatches[value.id] = nil
                         end
+                        Dmaps[v.name].activeMatches[value.id] = nil
                     end
                 end
             end

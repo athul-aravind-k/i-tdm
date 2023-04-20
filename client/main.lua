@@ -84,28 +84,32 @@ end
 local function sendToDmatchMap(map, matchId, bucketId)
     local mId = tonumber(matchId)
     local bId = tonumber(bucketId)
-    QBCore.Functions.TriggerCallback('i-tdm:check-match-validity', function(bool)
-        if bool then
-            local ped = PlayerPedId()
-            inDMatch = true
-            InMatch = true
-            createDeathMatchZone(map)
-            TriggerEvent('i-tdm:toggle-ambulance-job', false)
-            TriggerServerEvent('i-tdm:server:set-bucket', bId)
-            TriggerServerEvent('i-tdm:server:add-participant', map, mId)
-            activeMatchId = mId
-            local selectedMap = Config.DM_maps[map]
-            local spawnPoints = selectedMap.spawnpoints
-            local spawnPoint = spawnPoints[math.random(0, #spawnPoints)]
-            QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
-                SwitchOutPlayer(ped, 0, 1)
-                Citizen.Wait(2000)
-                setPedProperties()
-                SetEntityCoords(ped, spawnPoint, false, false, false, false)
-                Citizen.Wait(2000)
-                SwitchInPlayer(ped)
-                toggleHud(true, timeLeft)
-            end, map, mId)
+    QBCore.Functions.TriggerCallback('i-tdm:check-match-validity', function(active, joinable)
+        if active then
+            if joinable then
+                local ped = PlayerPedId()
+                createDeathMatchZone(map)
+                TriggerEvent('i-tdm:toggle-ambulance-job', false)
+                TriggerServerEvent('i-tdm:server:set-bucket', bId)
+                TriggerServerEvent('i-tdm:server:add-participant', map, mId)
+                activeMatchId = mId
+                local selectedMap = Config.DM_maps[map]
+                local spawnPoints = selectedMap.spawnpoints
+                local spawnPoint = spawnPoints[math.random(0, #spawnPoints)]
+                QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
+                    SwitchOutPlayer(ped, 0, 1)
+                    Citizen.Wait(2000)
+                    setPedProperties()
+                    SetEntityCoords(ped, spawnPoint, false, false, false, false)
+                    Citizen.Wait(2000)
+                    SwitchInPlayer(ped)
+                    toggleHud(true, timeLeft)
+                    inDMatch = true
+                    InMatch = true
+                end, map, mId)
+            else
+                QBCore.Functions.Notify('match Full', 'error', 2000)
+            end
         else
             QBCore.Functions.Notify('match doesnt exist', 'error', 2000)
         end
@@ -202,6 +206,8 @@ end)
 
 RegisterNetEvent('i-tdm:client:stop-dm', function()
     if inDMatch then
+        inDMatch = false
+        InMatch = false
         local ped = PlayerPedId()
         toggleHud(false, 0)
         SwitchOutPlayer(ped, 0, 1)
@@ -214,8 +220,6 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         RemoveWeaponFromPed(ped, 0xFAD1F1C9)
         Citizen.Wait(2000)
         SwitchInPlayer(PlayerPedId())
-        inDMatch = false
-        InMatch = false
         deathMatchZone:destroy()
         TriggerEvent('i-tdm:toggle-ambulance-job', true)
         TriggerServerEvent('i-tdm:server:remove-participant', currDmap, activeMatchId)
@@ -340,10 +344,14 @@ CreateThread(function()
     while true do
         if inDMatch then
             local ped = PlayerPedId()
-            SetPedSuffersCriticalHits(ped)
+            -- SetPedSuffersCriticalHits(ped)
             if IsEntityDead(ped) then
                 Wait(2000)
                 spawnToRandomPosDm(currDmap)
+                Wait(3000)
+            end
+            if not insideDmz then
+                SetEntityHealth(ped, 0)
             end
         end
         Wait(0)
@@ -375,7 +383,7 @@ AddEventHandler('gameEventTriggered', function(event, data)
     end
 end)
 
-Citizen.CreateThread(function()
+CreateThread(function()
     while true do
         Wait(0)
         if inDMatch then

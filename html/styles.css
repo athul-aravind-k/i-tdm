@@ -260,6 +260,7 @@ div::-webkit-scrollbar {
   align-items: flex-start;
   overflow-y: scroll;
   max-height: 80%;
+  min-height: 80%;
 }
 
 .map {
@@ -293,7 +294,7 @@ div::-webkit-scrollbar {
   );
   border: 0.5px solid #ffffff;
   border-radius: 8px;
-  transition: width 1s, height 1s;
+  transition: width 0.35s, height 0.35s;
   display: flex;
   justify-content: center;
   align-items: center;

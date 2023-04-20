@@ -282,8 +282,42 @@ function updateHud(data) {
   $("#kill-count").html(data.kills);
 }
 
+// function toggleTimer(bool, time) {
+//   var x;
+//   if (bool) {
+//     $(".timer-container").css("display", "flex");
+//     var timer = new Date().getTime() + time;
+//     function updateTimer() {
+//       var now = new Date().getTime();
+//       var t = timer - now;
+//       var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
+//       var seconds = Math.floor((t % (1000 * 60)) / 1000);
+//       const timeMsg = minutes + " : " + (seconds < 10 ? "0" : "") + seconds;
+//       $("#timer").html(timeMsg);
+//       if (t <= 60000) {
+//         $("#timer").css("color", "red");
+//       }
+//       if (t <= 0) {
+//         clearInterval(x);
+//         $("#timer").html("00 : 00");
+//         $("#timer").css("color", "white");
+//       } else {
+//         x = setTimeout(updateTimer, 1000);
+//       }
+//     }
+//     updateTimer();
+//   } else {
+//     $(".timer-container").css("display", "none");
+//     $("#timer").html("00 : 00");
+//     $("#timer").css("color", "white");
+//     clearTimeout(x);
+//     x=null
+//   }
+// }
+
+var x = null;
+
 function toggleTimer(bool, time) {
-  var x;
   if (bool) {
     $(".timer-container").css("display", "flex");
     var timer = new Date().getTime() + time;
@@ -302,8 +336,12 @@ function toggleTimer(bool, time) {
         $("#timer").html("00 : 00");
         $("#timer").css("color", "white");
       } else {
+        clearTimeout(x);
         x = setTimeout(updateTimer, 1000);
       }
+    }
+    if (x !== null) {
+      clearTimeout(x);
     }
     updateTimer();
   } else {
@@ -311,6 +349,7 @@ function toggleTimer(bool, time) {
     $("#timer").html("00 : 00");
     $("#timer").css("color", "white");
     clearTimeout(x);
+    x = null;
   }
 }
 
@@ -383,9 +422,9 @@ function showActiveMatches(matches) {
   <h2 class="title-text">Active lobbies</h2>`;
   if (matches.length) {
     container += `<div class="match-container">`;
-
+    console.log(matches.length);
     for (i = 0; i <= matches.length - 1; i++) {
-      var timer = new Date().getTime() + matches[i].endingTime;
+      var timer = new Date().getTime() + matches[i].timeLeft;
       var now = new Date().getTime();
       var t = timer - now;
       var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
