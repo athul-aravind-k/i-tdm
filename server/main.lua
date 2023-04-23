@@ -17,6 +17,7 @@ end)
 
 RegisterNetEvent('i-tdm:server:add-participant', function(map, matchId)
     Dmaps[map].activeMatches[matchId].participants[#Dmaps[map].activeMatches[matchId].participants + 1] = source
+    print('added ' .. source)
 end)
 
 RegisterNetEvent('i-tdm:server:remove-participant', function(map, matchId)
@@ -46,8 +47,10 @@ end)
 
 QBCore.Functions.CreateCallback('i-tdm:check-match-validity', function(source, cb, map, matchId)
     if Dmaps[map].activeMatches[tonumber(matchId)] then
-        if Config.DM_maps[map].maxMembers < #Dmaps[map].activeMatches.participants then
+        if Config.DM_maps[map].maxMembers > #Dmaps[map].activeMatches[tonumber(matchId)].participants then
             cb(true, true)
+        else
+            cb(true, false)
         end
     else
         cb(false, false)
@@ -73,7 +76,6 @@ QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb,
         endingTime = endingTime,
         creator = creator
     }
-    TriggerClientEvent('i-tdm:client:set-creator-matchid', source, id)
     cb(id)
 end)
 
@@ -117,10 +119,12 @@ CreateThread(function()
                     local curTime = os.time()
                     if (Dmaps[v.name].activeMatches[value.id].endingTime <= curTime) then
                         local participants = Dmaps[v.name].activeMatches[value.id].participants
-                        for i = 1, #participants do
-                            print('stopping for ' .. participants[i])
-                            TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
-                            table.remove(participants, i)
+                        for i = #participants, 1, -1 do
+                            if QBCore.Functions.GetPlayer(tonumber(participants[i])) then
+                                print('stopping for ' .. participants[i])
+                                TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
+                                table.remove(participants, i)
+                            end
                         end
                         Dmaps[v.name].activeMatches[value.id] = nil
                     end

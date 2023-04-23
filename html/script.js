@@ -1,4 +1,3 @@
-var isCreator = false;
 var selectedMap = null;
 
 $(function () {
@@ -14,7 +13,7 @@ $(function () {
     }
     if (event.data.type == "toggle-hud") {
       const data = event.data.message;
-      toggleHud(data.bool, data.time);
+      toggleHud(data.bool, data.time, data.totalTime);
     }
   });
 });
@@ -64,7 +63,6 @@ $(document).on("click", "#leader-board-btn", function (e) {
 $(document).on("click", "#back-btn-mode", function (e) {
   $(".create-container").css("display", "none");
   $(".card-container").css("display", "flex");
-  isCreator = false;
 });
 
 $(document).on("click", "#back-btn-join", function (e) {
@@ -190,7 +188,7 @@ function showToast(killer, victim, type) {
       if (messageQueue.length > 0) {
         showToast(messageQueue.shift()); // Display queued message if available
       }
-    }, 3000);
+    }, 5000);
     toast.timeout = timeout; // Store a reference to the timeout on the toast element
   }
   return toast; // Return the toast element for reference
@@ -218,17 +216,16 @@ function showKillToast(data) {
   }, 5000);
 }
 
-function toggleHud(bool, time) {
+function toggleHud(bool, time, totalTime) {
   if (bool) {
     $(".progress-bars").css("display", "flex");
     $(".kd-numbers").css("display", "block");
-    toggleTimer(true, time);
-    $(".timer-container").css("display", "flex");
+    toggleTimer(true, time, totalTime);
   } else {
     $(".progress-bars").css("display", "none");
     $(".kd-numbers").css("display", "none");
     $(".timer-container").css("display", "none");
-    toggleTimer(false, 0);
+    toggleTimer(false, 0, 0);
   }
 }
 
@@ -276,65 +273,74 @@ function updateHud(data) {
   $("#armor-count").html(
     `<img class="stats-img" src="assets/armor.png" alt=""> ${armor}`
   );
+  const clip = (data.clip < 10 ? "0" : "") + data.clip;
+  $("#clip-ammo").html(clip);
   $("#clip-ammo").html(data.clip);
   $("#total-ammo").html(data.ammo);
   $("#death-count").html(data.deaths);
   $("#kill-count").html(data.kills);
 }
 
-// function toggleTimer(bool, time) {
-//   var x;
-//   if (bool) {
-//     $(".timer-container").css("display", "flex");
-//     var timer = new Date().getTime() + time;
-//     function updateTimer() {
-//       var now = new Date().getTime();
-//       var t = timer - now;
-//       var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
-//       var seconds = Math.floor((t % (1000 * 60)) / 1000);
-//       const timeMsg = minutes + " : " + (seconds < 10 ? "0" : "") + seconds;
-//       $("#timer").html(timeMsg);
-//       if (t <= 60000) {
-//         $("#timer").css("color", "red");
-//       }
-//       if (t <= 0) {
-//         clearInterval(x);
-//         $("#timer").html("00 : 00");
-//         $("#timer").css("color", "white");
-//       } else {
-//         x = setTimeout(updateTimer, 1000);
-//       }
-//     }
-//     updateTimer();
-//   } else {
-//     $(".timer-container").css("display", "none");
-//     $("#timer").html("00 : 00");
-//     $("#timer").css("color", "white");
-//     clearTimeout(x);
-//     x=null
-//   }
-// }
-
 var x = null;
 
-function toggleTimer(bool, time) {
+function toggleTimer(bool, time, totalTime) {
   if (bool) {
     $(".timer-container").css("display", "flex");
     var timer = new Date().getTime() + time;
     function updateTimer() {
       var now = new Date().getTime();
       var t = timer - now;
+      var perc = Math.round((t / totalTime) * 100);
       var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
       var seconds = Math.floor((t % (1000 * 60)) / 1000);
       const timeMsg = minutes + " : " + (seconds < 10 ? "0" : "") + seconds;
       $("#timer").html(timeMsg);
-      if (t <= 60000) {
+      if (t <= 30000) {
+        $(".timer-inner").css(
+          "background",
+          "conic-gradient(#FF0000 " +
+            perc +
+            "%, rgba(255, 255, 255, 0) " +
+            perc +
+            "%)"
+        );
         $("#timer").css("color", "red");
+      } else if (t <= 120000) {
+        $(".timer-inner").css(
+          "background",
+          "conic-gradient(#FF6B00 " +
+            perc +
+            "%, rgba(255, 255, 255, 0) " +
+            perc +
+            "%)"
+        );
+      } else if (t <= 180000) {
+        $(".timer-inner").css(
+          "background",
+          "conic-gradient(#EBFF00 " +
+            perc +
+            "%, rgba(255, 255, 255, 0) " +
+            perc +
+            "%)"
+        );
+      } else {
+        $(".timer-inner").css(
+          "background",
+          "conic-gradient(#00ff47 " +
+            perc +
+            "%, rgba(255, 255, 255, 0) " +
+            perc +
+            "%)"
+        );
       }
       if (t <= 0) {
         clearInterval(x);
         $("#timer").html("00 : 00");
         $("#timer").css("color", "white");
+        $(".timer-inner").css(
+          "background",
+          "conic-gradient(#FF6B00 0%, 0, rgba(255, 255, 255, 0))"
+        );
       } else {
         clearTimeout(x);
         x = setTimeout(updateTimer, 1000);
@@ -392,7 +398,6 @@ function showCreateOptions() {
   $(".create-container").append(cardsHTML);
   $(".create-container").css("display", "flex");
   $(".card-container").css("display", "none");
-  isCreator = true;
 }
 
 function showJoinOptions() {

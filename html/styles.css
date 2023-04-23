@@ -5,11 +5,11 @@
   font-style: italic;
 }
 
-div {
+/* div {
   -ms-overflow-style: none;
   scrollbar-width: none;
   overflow-y: scroll;
-}
+} */
 
 div::-webkit-scrollbar {
   display: none;
@@ -256,7 +256,7 @@ div::-webkit-scrollbar {
 .map-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: flex-start;
   overflow-y: scroll;
   max-height: 80%;

@@ -53,8 +53,15 @@ end
 
 local function setPedProperties()
     local ped = PlayerPedId()
-    GiveWeaponToPed(ped, 0xAF113F99, 200, false, false)
-    GiveWeaponToPed(ped, 0xFAD1F1C9, 200, false, true)
+    local weapons = Config.DM_Weapons
+    for i = 1, #weapons do
+        if (i == 1) then
+            GiveWeaponToPed(ped, weapons[i], 200, false, true)
+        else
+            GiveWeaponToPed(ped, weapons[i], 200, false, false)
+        end
+        SetAmmoInClip(ped, weapons[i], 30)
+    end
     TriggerServerEvent('hud:server:RelieveStress', 100)
     SetPedArmour(ped, 100)
     SetEntityHealth(ped, 200)
@@ -76,7 +83,8 @@ local function toggleHud(bool, time)
         type = 'toggle-hud',
         message = {
             bool = bool,
-            time = time
+            time = time,
+            totalTime = (Config.DMTime * 60 * 1000)
         }
     })
 end
@@ -95,13 +103,18 @@ local function sendToDmatchMap(map, matchId, bucketId)
                 activeMatchId = mId
                 local selectedMap = Config.DM_maps[map]
                 local spawnPoints = selectedMap.spawnpoints
-                local spawnPoint = spawnPoints[math.random(0, #spawnPoints)]
+                local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
                 QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
                     SwitchOutPlayer(ped, 0, 1)
-                    Citizen.Wait(2000)
+                    Wait(2000)
+                    print('set')
+                    RequestCollisionAtCoord(spawnPoint.x, spawnPoint.y, spawnPoint.z)
+                    SetEntityCoordsNoOffset(ped, spawnPoint.x, spawnPoint.y, spawnPoint.z, false, false, false, true)
+                    NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.heading, true, true,
+                        false)
+                    ClearPedTasksImmediately(ped)
                     setPedProperties()
-                    SetEntityCoords(ped, spawnPoint, false, false, false, false)
-                    Citizen.Wait(2000)
+                    Wait(2000)
                     SwitchInPlayer(ped)
                     toggleHud(true, timeLeft)
                     inDMatch = true
@@ -211,14 +224,13 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         local ped = PlayerPedId()
         toggleHud(false, 0)
         SwitchOutPlayer(ped, 0, 1)
-        Citizen.Wait(2000)
+        Wait(2000)
         NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
         TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
         currBucket = nil
         SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
-        RemoveWeaponFromPed(ped, 0xAF113F99)
-        RemoveWeaponFromPed(ped, 0xFAD1F1C9)
-        Citizen.Wait(2000)
+        RemoveAllPedWeapons(ped)
+        Wait(2000)
         SwitchInPlayer(PlayerPedId())
         deathMatchZone:destroy()
         TriggerEvent('i-tdm:toggle-ambulance-job', true)
@@ -244,10 +256,6 @@ RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
     end
 end)
 
-
--- RegisterNetEvent('i-tdm:client:set-creator-matchid', function(id)
---     activeMatchId = id
--- end)
 
 AddEventHandler('onResourceStart', function(resource)
     if (GetCurrentResourceName() ~= resource) then
