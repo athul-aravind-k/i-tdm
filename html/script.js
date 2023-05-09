@@ -411,7 +411,6 @@ function showActiveMatches(matches) {
   <h2 class="title-text">Active lobbies</h2>`;
   if (matches.length) {
     container += `<div class="match-container">`;
-    console.log(matches.length);
     for (i = 0; i <= matches.length - 1; i++) {
       var timer = new Date().getTime() + matches[i].timeLeft;
       var now = new Date().getTime();
