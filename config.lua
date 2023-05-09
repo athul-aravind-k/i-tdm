@@ -10,7 +10,51 @@ Config.startPed = {
     maxZ = 29.29,
 }
 
-Config.DMTime = 5     --minutes
+Config.pedInvincibleTime = 3 --seconds
+
+Config.reloadSkinEvent =
+'illenium-appearance:client:reloadSkin' -- change this event according to the clothing system used.
+
+Config.Clothes = {
+    --1 is drawable id and 2 is texture id
+    male = {
+        ['tshirt_1'] = 15, --shirt number
+        ['tshirt_2'] = 0,  --shirt texture
+        ['torso_1'] = 61,
+        ['torso_2'] = 3,
+        ['arms'] = 27,
+        ['pants_1'] = 34,
+        ['pants_2'] = 0,
+        ['shoes_1'] = 25,
+        ['shoes_2'] = 0,
+        ['helmet_1'] = 115,
+        ['helmet_2'] = 0,
+        ['bproof_1'] = 0,
+        ['bproof_2'] = 0,
+        ['mask_1'] = 52,
+        ['mask_2'] = 0
+    },
+    female = {
+        ['tshirt_1'] = 14,
+        ['tshirt_2'] = 0,
+        ['torso_1'] = 54,
+        ['torso_2'] = 3,
+        ['arms'] = 25,
+        ['pants_1'] = 33,
+        ['pants_2'] = 0,
+        ['shoes_1'] = 25,
+        ['shoes_2'] = 0,
+        ['helmet_1'] = 114,
+        ['helmet_2'] = 0,
+        ['bproof_1'] = 0,
+        ['bproof_2'] = 0,
+        ['mask_1'] = 52,
+        ['mask_2'] = 0
+    }
+
+}
+
+Config.DMTime = 20    --minutes
 
 Config.DM_Weapons = { --first weapon will be forced in hand
     0xFAD1F1C9,       -- carbine mk2

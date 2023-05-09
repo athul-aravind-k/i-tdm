@@ -161,10 +161,14 @@ $(document).on("click", "#back-btn-select-match", function (e) {
   showJoinOptions();
 });
 
-var messageQueue = []; // Array to hold queued messages
-
+function showKillToast(data) {
+  const killer = data.killer;
+  const killed = data.killed;
+  const type = data.type;
+  showToast(killer, killed, type);
+}
+var counter = 0;
 function showToast(killer, victim, type) {
-  var container = document.getElementById("toast-container");
   var toast = document.createElement("div");
   toast.classList.add("toast");
   if (type == "killed") {
@@ -174,46 +178,26 @@ function showToast(killer, victim, type) {
   } else if (type == "other") {
     toast.classList.add("toast-other");
   }
+  var toastId = "toast-div-" + counter;
+  toast.id = toastId;
   message = `<span class="killer-name"> ${killer + "  "}</span>
-  <img class="bullet-msg" src="assets/bullet.png" />
-  <span class="victim-name">${"  " + victim}</span>`;
+    <img class="bullet-msg" src="assets/bullet.png" />
+    <span class="victim-name">${"  " + victim}</span>`;
   toast.innerHTML = message;
 
-  if (container.childElementCount >= 3) {
-    messageQueue.push(message); // Queue the message if container is full
-  } else {
-    container.appendChild(toast);
-    var timeout = setTimeout(function () {
-      container.removeChild(toast);
-      if (messageQueue.length > 0) {
-        showToast(messageQueue.shift()); // Display queued message if available
-      }
-    }, 5000);
-    toast.timeout = timeout; // Store a reference to the timeout on the toast element
-  }
-  return toast; // Return the toast element for reference
-}
+  // Append the new div to the container
+  var container = document.getElementById("toast-container");
+  container.appendChild(toast);
 
-var showButton = document.getElementById("show-toast-button");
-var toasts = []; // Array to hold references to the toast elements
-
-function showKillToast(data) {
-  const killer = data.killer;
-  const killed = data.killed;
-  const type = data.type;
-  var toast = showToast(killer, killed, type);
-  toasts.push(toast);
-
-  // Remove the first toast element after 5 seconds
+  // Set a timer to hide the div after 5 seconds
   setTimeout(function () {
-    var removedToast = toasts.shift();
-    if (removedToast.parentNode) {
-      removedToast.parentNode.removeChild(removedToast);
-    }
-    if (messageQueue.length > 0) {
-      showToast(messageQueue.shift()); // Display queued message if available
+    var toastToRemove = document.getElementById(toastId);
+    if (toastToRemove) {
+      container.removeChild(toastToRemove);
     }
   }, 5000);
+
+  counter++;
 }
 
 function toggleHud(bool, time, totalTime) {

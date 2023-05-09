@@ -21,6 +21,36 @@ local function getRandomLocation(variable)
     return variable[math.random(1, #variable)]
 end
 
+local function setClothes()
+    local ped = PlayerPedId()
+    local PlayerData = QBCore.Functions.GetPlayerData()
+    if PlayerData.charinfo.gender == 0 then
+        SetPedComponentVariation(ped, 1, Config.Clothes.male['mask_1'], Config.Clothes.male['mask_2'], 0)          --mask
+        SetPedComponentVariation(ped, 3, Config.Clothes.male['arms'], 0, 0)                                        --arms
+        SetPedComponentVariation(ped, 8, Config.Clothes.male['tshirt_1'], Config.Clothes.male['tshirt_2'], 0)      --t-shirt
+        SetPedComponentVariation(ped, 11, Config.Clothes.male['torso_1'], Config.Clothes.male['torso_2'], 0)       --torso2
+        SetPedComponentVariation(ped, 9, Config.Clothes.male['bproof_1'], Config.Clothes.male['bproof_2'], 0)      --vest
+        SetPedComponentVariation(ped, 10, Config.Clothes.male['decals_1'], Config.Clothes.male['decals_2'], 0)     --decals
+        SetPedComponentVariation(ped, 7, Config.Clothes.male['chain_1'], Config.Clothes.male['chain_2'], 0)        --accessory
+        SetPedComponentVariation(ped, 4, Config.Clothes.male['pants_1'], Config.Clothes.male['pants_2'], 0)        -- pants
+        SetPedComponentVariation(ped, 6, Config.Clothes.male['shoes_1'], Config.Clothes.male['shoes_2'], 0)        --shoes
+        SetPedPropIndex(ped, 0, Config.Clothes.male['helmet_1'], Config.Clothes.male['helmet_2'], true)            --hat
+        SetPedPropIndex(ped, 2, Config.Clothes.male['ears_1'], Config.Clothes.male['ears_2'], true)                --ear
+    else
+        SetPedComponentVariation(ped, 1, Config.Clothes.female['mask_1'], Config.Clothes.female['mask_2'], 0)      --mask
+        SetPedComponentVariation(ped, 3, Config.Clothes.female['arms'], 0, 0)                                      --arms
+        SetPedComponentVariation(ped, 8, Config.Clothes.female['tshirt_1'], Config.Clothes.female['tshirt_2'], 0)  --t-shirt
+        SetPedComponentVariation(ped, 11, Config.Clothes.female['torso_1'], Config.Clothes.female['torso_2'], 0)   --torso2
+        SetPedComponentVariation(ped, 9, Config.Clothes.female['bproof_1'], Config.Clothes.female['bproof_2'], 0)  --vest
+        SetPedComponentVariation(ped, 10, Config.Clothes.female['decals_1'], Config.Clothes.female['decals_2'], 0) --decals
+        SetPedComponentVariation(ped, 7, Config.Clothes.female['chain_1'], Config.Clothes.female['chain_2'], 0)    --accessory
+        SetPedComponentVariation(ped, 4, Config.Clothes.female['pants_1'], Config.Clothes.female['pants_2'], 0)    -- pants
+        SetPedComponentVariation(ped, 6, Config.Clothes.female['shoes_1'], Config.Clothes.female['shoes_2'], 0)    --shoes
+        SetPedPropIndex(ped, 0, Config.Clothes.female['helmet_1'], Config.Clothes.female['helmet_2'], true)        --hat
+        SetPedPropIndex(ped, 2, Config.Clothes.female['ears_1'], Config.Clothes.female['ears_2'], true)            --ear
+    end
+end
+
 local function createSpawnBlip()
     startBlip = AddBlipForCoord(Config.startPed.pos)
     SetBlipSprite(startBlip, 364)
@@ -51,31 +81,35 @@ local function createDeathMatchZone(map)
     end)
 end
 
-local function setPedProperties()
+local function setPedProperties(clipReload, lastWeapon)
     local ped = PlayerPedId()
     local weapons = Config.DM_Weapons
     for i = 1, #weapons do
-        if (i == 1) then
-            GiveWeaponToPed(ped, weapons[i], 200, false, true)
-        else
-            GiveWeaponToPed(ped, weapons[i], 200, false, false)
+        GiveWeaponToPed(ped, weapons[i], 200, false, false)
+        if (clipReload) then
+            SetAmmoInClip(ped, weapons[i], 30)
         end
-        SetAmmoInClip(ped, weapons[i], 30)
+        if lastWeapon and weapons[i] == lastWeapon then
+            GiveWeaponToPed(ped, lastWeapon, 200, false, true)
+        end
     end
     TriggerServerEvent('hud:server:RelieveStress', 100)
     SetPedArmour(ped, 100)
     SetEntityHealth(ped, 200)
 end
 
-local function spawnToRandomPosDm(map)
+local function spawnToRandomPosDm(map, lastWeapon)
     ped = PlayerPedId()
     local selectedMap = Config.DM_maps[map]
     local spawnPoints = selectedMap.spawnpoints
     local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
     local heading = GetEntityHeading(ped)
     NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z + 0.5, heading, true, false)
-    setPedProperties()
+    setPedProperties(true, lastWeapon)
     SetEntityCoords(ped, spawnPoint, false, false, false, false)
+    SetEntityInvincible(ped, true)
+    Wait(Config.pedInvincibleTime * 1000)
+    SetEntityInvincible(ped, false)
 end
 
 local function toggleHud(bool, time)
@@ -97,6 +131,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
             if joinable then
                 local ped = PlayerPedId()
                 createDeathMatchZone(map)
+                TriggerEvent("hospital:client:Revive")
                 TriggerEvent('i-tdm:toggle-ambulance-job', false)
                 TriggerServerEvent('i-tdm:server:set-bucket', bId)
                 TriggerServerEvent('i-tdm:server:add-participant', map, mId)
@@ -107,16 +142,19 @@ local function sendToDmatchMap(map, matchId, bucketId)
                 QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
                     SwitchOutPlayer(ped, 0, 1)
                     Wait(2000)
-                    print('set')
+                    SetEntityInvincible(ped, true)
                     RequestCollisionAtCoord(spawnPoint.x, spawnPoint.y, spawnPoint.z)
                     SetEntityCoordsNoOffset(ped, spawnPoint.x, spawnPoint.y, spawnPoint.z, false, false, false, true)
                     NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.heading, true, true,
                         false)
                     ClearPedTasksImmediately(ped)
-                    setPedProperties()
                     Wait(2000)
                     SwitchInPlayer(ped)
                     toggleHud(true, timeLeft)
+                    setClothes()
+                    setPedProperties(false, nil)
+                    Wait(2000)
+                    SetEntityInvincible(ped, false)
                     inDMatch = true
                     InMatch = true
                 end, map, mId)
@@ -225,13 +263,17 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         toggleHud(false, 0)
         SwitchOutPlayer(ped, 0, 1)
         Wait(2000)
-        NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
         TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
+        DMDeaths = 0
+        DMKills = 0
         currBucket = nil
         SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
         RemoveAllPedWeapons(ped)
         Wait(2000)
         SwitchInPlayer(PlayerPedId())
+        NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
+        TriggerEvent("hospital:client:Revive")
+        TriggerEvent(Config.reloadSkinEvent)
         deathMatchZone:destroy()
         TriggerEvent('i-tdm:toggle-ambulance-job', true)
         TriggerServerEvent('i-tdm:server:remove-participant', currDmap, activeMatchId)
@@ -255,7 +297,6 @@ RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
         showKillMessage(killerName, victimName, 'other')
     end
 end)
-
 
 AddEventHandler('onResourceStart', function(resource)
     if (GetCurrentResourceName() ~= resource) then
@@ -343,6 +384,10 @@ CreateThread(function()
         if not InMatch then
             HideHudComponentThisFrame(19)
             DisableControlAction(2, 37, true)
+        else
+            DisableControlAction(0, 140, true)
+            DisableControlAction(0, 141, true)
+            DisableControlAction(0, 142, true)
         end
         Wait(1)
     end
@@ -352,13 +397,13 @@ CreateThread(function()
     while true do
         if inDMatch then
             local ped = PlayerPedId()
-            -- SetPedSuffersCriticalHits(ped)
             if IsEntityDead(ped) then
+                local _, lastWeapon = GetCurrentPedWeapon(ped)
                 Wait(2000)
-                spawnToRandomPosDm(currDmap)
+                spawnToRandomPosDm(currDmap, lastWeapon)
                 Wait(3000)
             end
-            if not insideDmz then
+            if inDMatch and not insideDmz then
                 SetEntityHealth(ped, 0)
             end
         end
@@ -384,7 +429,8 @@ AddEventHandler('gameEventTriggered', function(event, data)
                         GetPlayerName(victimPlayerId), currDmap,
                         activeMatchId)
                     DMKills = DMKills + 1
-                    setPedProperties()
+                    local _, lastWeapon = GetCurrentPedWeapon(ped)
+                    setPedProperties(false, lastWeapon)
                 end
             end
         end
