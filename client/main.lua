@@ -319,7 +319,11 @@ RegisterNUICallback('get-maps', function(data, cb)
     local maps = {}
     if data.isTdm then
         for _, v in pairs(Config.TDM_maps) do
-            maps[#maps + 1] = v.name
+            maps[#maps + 1] = {
+                name = v.name,
+                label = v.label,
+                image = v.image
+            }
         end
     else
         for _, v in pairs(Config.DM_maps) do
@@ -350,6 +354,20 @@ RegisterNUICallback('join-tdm', function(data, cb)
     --tdm join logic
 end)
 
+RegisterNUICallback("createTDM", function(data, cb)
+    local password = data.password
+    local map = data.
+    print("map", map)
+    print("Password received from UI:", password)
+    if password == "" then
+        print("Public lobby")
+    else
+        print("Private lobby with password:", password)
+    end
+    cb("ok")
+end)
+
+
 CreateThread(function()
     RequestModel(GetHashKey(Config.startPed.model))
     while (not HasModelLoaded(GetHashKey(Config.startPed.model))) do
@@ -360,23 +378,23 @@ CreateThread(function()
     SetBlockingOfNonTemporaryEvents(starterPed, true)
     FreezeEntityPosition(starterPed, true)
 
-    exports['qb-target']:AddBoxZone("startped", Config.startPed.targetZone, 1, 1, {
-        name = "i-tdm=start",
-        heading = Config.startPed.targetHeading,
-        debugPoly = false,
-        minZ = Config.startPed.minZ,
-        maxZ = Config.startPed.maxZ,
-    }, {
-        options = {
-            {
-                type = "client",
-                event = "i-tdm:client:open-menu",
-                icon = "Fa fa-solid fa-gun",
-                label = "Open TDM Menu",
-            },
-        },
-        distance = 1.5
-    })
+    exports.ox_target:addBoxZone({
+    name = 'i-tdm-start',
+    coords = Config.startPed.targetZone, -- vector3
+    size = vec3(1, 1, Config.startPed.maxZ - Config.startPed.minZ),
+    rotation = Config.startPed.targetHeading,
+    debug = false,
+    options = {
+        {
+            type = 'client',
+            event = 'i-tdm:client:open-menu',
+            icon = 'fa-solid fa-gun',
+            label = 'Open TDM Menu',
+            distance = 1.5
+        }
+    }
+})
+
 end)
 
 CreateThread(function()
@@ -453,3 +471,4 @@ CreateThread(function()
         end
     end
 end)
+

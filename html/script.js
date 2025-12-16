@@ -42,7 +42,7 @@ function openUi(bool) {
 
 function setupCreateMatchScreen(maps, isTdm) {
   if (isTdm) {
-    console.log("TDM");
+    showMapsTdm(maps)
   } else {
     showMaps(maps);
   }
@@ -98,7 +98,7 @@ $(document).on("click", "#create-tdm", function (e) {
     "https://i-tdm/get-maps",
     JSON.stringify({ isTdm: true }),
     function (data) {
-      // setupCreateMatchScreen(data.maps, true);
+      setupCreateMatchScreen(data, true);
     }
   );
 });
@@ -135,6 +135,12 @@ $(document).on("click", "#confirm-dm-selection", function (e) {
   }
 });
 
+$(document).on("click", "#confirm-tdm-selection", function (e) {
+  if (selectedMap) {
+    showTeamJoin()
+  }
+});
+
 $(document).on("click", "#join-dm", function (e) {
   $.post("https://i-tdm/get-active-matches", {}, function (matches) {
     showActiveMatches(matches);
@@ -159,6 +165,11 @@ $(document).on("click", ".match-select-btn", function (e) {
 $(document).on("click", "#back-btn-select-match", function (e) {
   $(".create-container").empty();
   showJoinOptions();
+});
+
+$(document).on("click", "#confirm-tdm-selection", function (e) {
+  $(".create-container").empty();
+  showPasswordTdm();
 });
 
 function showKillToast(data) {
@@ -384,6 +395,25 @@ function showCreateOptions() {
   $(".card-container").css("display", "none");
 }
 
+function showMapsTdm(maps){
+  var container = `<h2 class="title-text">Create a lobby</h2>
+  <h2 id="back-btn-select-map" class="close"> < Back</h2>
+  <div class="map-container">`;
+  if (maps.length) {
+    for (i = 0; i <= maps.length - 1; i++) {
+      var map = `<div class="map" style="background-image: url(assets/maps/${maps[i].image});">
+      <div class="map-name-container" data-name="${maps[i].name}"><span>${maps[i].label}</span></div>
+    </div>`;
+      container += map;
+    }
+  }
+  container += `<button id="confirm-tdm-selection" class="confirm-dmatch-btn">Confirm</button></div>`;
+  $(".create-container").empty();
+  $(".create-container").append(container);
+  $(".create-container").css("display", "flex");
+  $(".card-container").css("display", "none");
+}
+
 function showJoinOptions() {
   var cardsHTML = `
   <h2 id="back-btn-join" class="close">< Back</h2>
@@ -440,4 +470,45 @@ function showActiveMatches(matches) {
   $(".create-container").append(container);
   $(".create-container").css("display", "flex");
   $(".card-container").css("display", "none");
+}
+
+function showPasswordTdm() {
+  const createpass = `
+  <h2 id="back-btn-create-pass-tdm" class="close">< Back</h2>
+        <div class="tdm-create-pass">
+          <div class="tdm-create-pass-form">
+            <h2>Create Match</h2>
+          <div class="tdm-private-pass">
+            <label class="tdm-password-label">
+              <span>Password</span>
+              <input id="tdm-password-input" placeholder="Enter password" />
+            </label>
+          </div>
+          <span>*Leave password empty to create a public lobby.</span>
+          </div>
+          <button id="create-tdm-pass" class="tdm-create-pass-btn">
+            Start
+          </button>
+        </div>
+      </div>`
+    $(".create-container").empty();
+  $(".create-container").append(createpass);
+  $(".create-container").css("display", "flex");
+  $(".card-container").css("display", "none");
+}
+
+$(document).on("click", "#create-tdm-pass", function () {
+  const password = $("#tdm-password-input").val().trim();
+
+  console.log("Entered password:", password);
+
+  // Send to Lua
+  $.post("https://i-tdm/createTDM", JSON.stringify({
+    password: password,
+    map:selectedMap
+  }));
+});
+
+function showTeamJoin(){
+  
 }

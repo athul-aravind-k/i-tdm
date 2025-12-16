@@ -5,6 +5,10 @@
   font-style: italic;
 }
 
+/* body {
+  background-color: black;
+} */
+
 /* div {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -418,4 +422,221 @@ div::-webkit-scrollbar {
 .match-select-btn:hover {
   background: linear-gradient(90deg, #01d0ff 2.78%, #0168ff 97.02%);
   box-shadow: 0px 0px 25px #00d1ff;
+}
+
+.tdm-join-card-blue {
+  border: 1px solid blue;
+}
+
+.tdm-join-card-red {
+  border: 1px solid red;
+}
+
+.card-tdm-team {
+  display: flex;
+  width: 35%;
+  height: 90%;
+  gap: 10px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-tdm-team-right {
+  display: flex;
+  width: 20%;
+  height: 90%;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.tdm-team-join-button {
+  position: relative;
+  border-radius: 8px;
+  background-color: #ffd81700;
+  width: 90%;
+  height: 10.5%;
+  font-weight: 800;
+  font-size: 1.7em;
+  line-height: 54px;
+  color: #ffffff;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.tdm-start-btn {
+  border-radius: 8px;
+  color: white;
+  background-color: #ffd81700;
+  font-weight: 800;
+  font-size: 20px;
+  width: 100%;
+  height: 10%;
+  border-color: #ffffff;
+}
+
+.tdm-player-list-settings {
+  width: 100% !important;
+  background-color: #1d1d1d8f;
+}
+
+.tdm-start-btn:hover {
+  box-shadow: 0px 0px 15px #c0bfbed7;
+}
+
+.tdm-blue-btn {
+  border: 1px solid #174dff;
+}
+
+.tdm-blue-btn:hover {
+  box-shadow: 0px 0px 15px #0066ff;
+}
+
+.tdm-red-btn {
+  border: 1px solid #ff1f17;
+}
+
+.tdm-red-btn:hover {
+  box-shadow: 0px 0px 15px #ff4800;
+}
+
+.tdm-player-list {
+  width: 90%;
+  height: 100%;
+  border-radius: 16px;
+  overflow-y: auto;
+}
+
+.tdm-player-list-blue {
+  background-color: rgba(57, 57, 241, 0.479);
+}
+
+.tdm-player-list-red {
+  background-color: rgba(241, 57, 57, 0.363);
+}
+
+.tdm-player-item {
+  position: relative;
+  text-align: center;
+  padding: 8px;
+  border: 1px solid #585555;
+  border-radius: 16px;
+  margin-bottom: 2px;
+}
+
+.tdm-player-item:first-child {
+  margin-top: 16px;
+}
+
+.tdm-owner {
+  border-color: #efbf04;
+}
+
+.tdm-time-input {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tdm-select {
+  /* Reset */
+  appearance: none;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  padding: 10px;
+  width: 95%;
+  border-radius: 16px;
+  background: url(https://upload.wikimedia.org/wikipedia/commons/9/9d/Caret_down_font_awesome_whitevariation.svg)
+      no-repeat right 0.8em center / 1.4em,
+    linear-gradient(
+      to left,
+      rgba(255, 255, 255, 0.3) 3em,
+      rgba(255, 255, 255, 0.2) 3em
+    );
+  color: rgb(190, 188, 188);
+  border-radius: 0.25em;
+  box-shadow: 0 0 1em 0 rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.tdm-delete-player {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  right: 15px;
+  cursor: pointer;
+}
+
+.tdm-owner-player {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  left: 15px;
+}
+
+.tdm-create-pass {
+  width: 60%;
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: column;
+  border: 1px solid #ffffff;
+  border-radius: 16px;
+}
+
+.tdm-create-pass-btn {
+  width: 80%;
+  border-radius: 8px;
+  color: white;
+  background-color: #ffd81700;
+  font-weight: 800;
+  font-size: 20px;
+  height: 10%;
+  border-color: #ffffff;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.tdm-create-pass-form {
+  width: 60%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.tdm-create-pass-btn:hover {
+  box-shadow: 0px 0px 10px #f4f6f7;
+}
+
+.tdm-password-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tdm-private-pass {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.tdm-password-label input {
+  border-radius: 16px;
+  width: 80%;
+  height: 24px;
+}
+
+.tdm-invalid-password {
+  color: red;
+  font-size: 12px;
 }
