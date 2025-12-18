@@ -13,8 +13,15 @@ inTDM = false
 inDMatch = false
 local currBucket
 local activeMatchId
+local activeTDMId
 local DMKills = 0
 local DMDeaths = 0
+local Zones = {}
+local TdmTeam = nil
+local TdmMap = nil
+local HealThread = nil
+local InOwnSpawn = false
+local InEnemySpawn = false
 
 --hoping tha this shit works and moving onn :(
 local function getRandomLocation(variable)
@@ -131,8 +138,8 @@ local function sendToDmatchMap(map, matchId, bucketId)
             if joinable then
                 local ped = PlayerPedId()
                 createDeathMatchZone(map)
-                TriggerEvent("hospital:client:Revive")
-                TriggerEvent('i-tdm:toggle-ambulance-job', false)
+                -- TriggerEvent("hospital:client:Revive")
+                -- TriggerEvent('i-tdm:toggle-ambulance-job', false)
                 TriggerServerEvent('i-tdm:server:set-bucket', bId)
                 TriggerServerEvent('i-tdm:server:add-participant', map, mId)
                 activeMatchId = mId
@@ -238,9 +245,182 @@ local function createZones(mapName)
     end)
 end
 
+local function showJoinUi(map,mapTable)
+    print(map)
+    SendNUIMessage({
+        type = "show-tdm-join",
+        matchId = activeTDMId,
+        playerId = GetPlayerServerId(PlayerId()),
+        map = map,
+        mapTable = mapTable
+    })
+end
+
+local function startTeamDeathMatch(map,password)
+    currTDmap = map
+    currBucket = GetEntityPopulationType(GetEntityCoords(ped))
+    QBCore.Functions.TriggerCallback('i-tdm:get-new-bucketId', function(bucketId)
+        QBCore.Functions.TriggerCallback('i-tdm:server:createTDMatch', function(matchId,mapTable)
+            activeTDMId = matchId
+            showJoinUi(map,mapTable)
+        end, map, bucketId,password)
+    end)
+end
+
+RegisterNetEvent("i-tdm:client:updateLobby", function(map, matchId, matchData)
+  showJoinUi(map, matchData);
+end);
+
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     createSpawnBlip()
 end)
+
+
+local function DrawPolyZone(zoneData, color)
+    local zone = PolyZone:Create(zoneData.zones, {
+        name = zoneData.name,
+        minZ = zoneData.minZ,
+        maxZ = zoneData.maxZ,
+        debugPoly = true,
+        debugColors = {
+        walls = color,
+        outline = {0, 0, 255},
+        grid = {0, 0, 255}
+    }
+    })
+    return zone
+end
+
+local function GetRandomPointInZone(zoneData)
+    local points = zoneData.zones
+    local centerX, centerY = 0.0, 0.0
+    for _, point in ipairs(points) do
+        centerX += point.x
+        centerY += point.y
+    end
+    centerX /= #points
+    centerY /= #points
+    return vector3(centerX, centerY, zoneData.minZ + 1.0)
+end
+
+local function sendToTeamSpawn()
+    if TdmTeam == "blue" then
+        local spawn = GetRandomPointInZone(TdmMap.blueZone)
+        SetEntityCoords(PlayerPedId(), spawn.x, spawn.y, spawn.z)
+    elseif TdmTeam == "red" then
+        local spawn = GetRandomPointInZone(TdmMap.redZone)
+        SetEntityCoords(PlayerPedId(), spawn.x, spawn.y, spawn.z)
+    end
+end
+
+local function StartHealing()
+    if HealThread then return end
+
+    SetEntityInvincible(PlayerPedId(), true)
+
+    HealThread = CreateThread(function()
+        while InOwnSpawn do
+            local ped = PlayerPedId()
+            local hp = GetEntityHealth(ped)
+            if hp < 200 then
+                SetEntityHealth(ped, math.min(hp + 2, 200))
+            end
+            Wait(1000)
+        end
+    end)
+end
+
+local function StopHealing()
+    InOwnSpawn = false
+    HealThread = nil
+    SetEntityInvincible(PlayerPedId(), false)
+end
+
+local function ShowWarning(text, time)
+    BeginTextCommandPrint("STRING")
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandPrint(time or 2000, true)
+end
+
+local function EnemySpawnKill()
+    InEnemySpawn = true
+
+    ShowWarning("~r~WARNING: Enemy Spawn!", 2000)
+    Wait(2000)
+
+    if InEnemySpawn then
+        SetEntityHealth(PlayerPedId(), 0)
+        sendToTeamSpawn()
+    end
+end
+
+
+RegisterNetEvent("i-tdm:client:startTDM", function(data)
+    local mapName = data.map
+    TdmTeam = data.team
+    TdmMap = Config.TDM_maps[mapName]
+    local bId = data.bucketId
+    local ped = PlayerPedId()
+    
+    if not TdmMap then return end
+    for _, z in pairs(Zones) do
+        z:destroy()
+    end
+    
+    Zones = {}
+    Zones.blue = DrawPolyZone(TdmMap.blueZone, { 0,100,255 })
+    Zones.red = DrawPolyZone(TdmMap.redZone, { 255,50,50 })
+    Zones.outer = DrawPolyZone(TdmMap.outerZone, { 255, 255, 255 })
+    TriggerServerEvent('i-tdm:server:set-bucket', bId)
+    SwitchOutPlayer(ped, 0, 1)
+    Wait(2000)
+    SetEntityInvincible(ped, true)
+    ClearPedTasksImmediately(ped)
+    Wait(2000)
+    SwitchInPlayer(ped)
+    toggleHud(true, 3000)
+    inTDM = true
+    InMatch = true
+    setClothes()
+    setPedProperties(false, nil)
+    Wait(2000)
+    SetEntityInvincible(ped, false)
+    sendToTeamSpawn()
+
+    Zones.outer:onPlayerInOut(function(isInside)
+        if not isInside then
+        DoScreenFadeOut(600)
+            while not IsScreenFadedOut() do
+                Wait(0)
+        end
+    sendToTeamSpawn()
+    Wait(200)
+
+    DoScreenFadeIn(300)
+        end
+    end)
+
+    local ownZone = TdmTeam == "red" and Zones.red or Zones.blue
+    ownZone:onPlayerInOut(function(isInside)
+        InOwnSpawn = isInside
+    if isInside then
+        StartHealing()
+    else
+        StopHealing()
+    end
+end)
+
+    local enemyZone = TdmTeam == "red" and Zones.blue or Zones.red
+    enemyZone:onPlayerInOut(function(isInside)
+    InEnemySpawn = isInside
+    if isInside then
+        EnemySpawnKill()
+    end
+end)
+end)
+
+
+
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     RemoveBlip(startBlip)
@@ -256,7 +436,32 @@ RegisterNetEvent('i-tdm:client:open-menu', function()
 end)
 
 RegisterNetEvent('i-tdm:client:stop-dm', function()
-    if inDMatch then
+    if inTDM then 
+        inTDM = false
+        InMatch = false
+        local ped = PlayerPedId()
+        toggleHud(false, 0)
+        SwitchOutPlayer(ped, 0, 1)
+        Wait(2000)
+        TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
+        currBucket = nil
+        SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
+        RemoveAllPedWeapons(ped)
+        Wait(2000)
+        SwitchInPlayer(PlayerPedId())
+        NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
+        TriggerEvent("hospital:client:Revive")
+        TriggerEvent(Config.reloadSkinEvent)
+        currTDmap = nil
+        TdmTeam = nil
+        InOwnSpawn = false
+        InEnemySpawn = false
+        HealThread = nil
+        for _, z in pairs(Zones) do
+        z:destroy()
+        --TriggerServerEvent('i-tdm:server:remove-participant-tdm', currDmap, activeMatchId) 
+        end
+    elseif inDMatch then
         inDMatch = false
         InMatch = false
         local ped = PlayerPedId()
@@ -351,20 +556,23 @@ RegisterNUICallback('join-dm', function(data, cb)
 end)
 
 RegisterNUICallback('join-tdm', function(data, cb)
-    --tdm join logic
+    TriggerServerEvent('i-tdm:server:joinTeam',data)
 end)
 
 RegisterNUICallback("createTDM", function(data, cb)
     local password = data.password
-    local map = data.
-    print("map", map)
-    print("Password received from UI:", password)
-    if password == "" then
-        print("Public lobby")
-    else
-        print("Private lobby with password:", password)
-    end
+    local map = data.map
+    startTeamDeathMatch(map,password)
     cb("ok")
+end)
+
+RegisterNUICallback("tdm-update-settings", function(data, cb)
+    TriggerServerEvent('i-tdm:server:update-settings',data)
+    cb("ok")
+end)
+
+RegisterNUICallback('start-tdm', function(data, cb)
+    TriggerServerEvent('i-tdm:server:start-tdm',data)
 end)
 
 
@@ -425,6 +633,15 @@ CreateThread(function()
                 SetEntityHealth(ped, 0)
             end
         end
+        if inTDM then
+            local ped = PlayerPedId()
+            if IsEntityDead(ped) then
+                local _, lastWeapon = GetCurrentPedWeapon(ped)
+                Wait(2000)
+                sendToTeamSpawn()
+                Wait(3000)
+            end
+        end
         Wait(0)
     end
 end)
@@ -472,3 +689,13 @@ CreateThread(function()
     end
 end)
 
+CreateThread(function()
+    while true do
+        Wait(0)
+        if TdmTeam and (InOwnSpawn or InEnemySpawn) then
+            DisablePlayerFiring(PlayerId(), true)
+            DisableControlAction(0, 24, true) -- attack
+            DisableControlAction(0, 25, true) -- aim
+        end
+    end
+end)

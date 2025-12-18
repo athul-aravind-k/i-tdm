@@ -15,6 +15,9 @@ $(function () {
       const data = event.data.message;
       toggleHud(data.bool, data.time, data.totalTime);
     }
+    if (event.data.type ==="show-tdm-join"){
+      showTDMJoin(event.data.map,event.data.matchId,event.data.playerId,event.data.mapTable)
+    }
   });
 });
 
@@ -71,18 +74,6 @@ $(document).on("click", "#back-btn-join", function (e) {
   $(".card-container").css("display", "flex");
 });
 
-$(document).on("click", "#join-tdm", function (e) {
-  // show TDM maps
-  //change hardcode
-  $.post(
-    "https://i-tdm/join-tdm",
-    JSON.stringify({ map: "map1" }),
-    function (data) {
-      // load hud here
-    }
-  );
-});
-
 $(document).on("click", "#create-dm", function (e) {
   $.post(
     "https://i-tdm/get-maps",
@@ -94,6 +85,10 @@ $(document).on("click", "#create-dm", function (e) {
 });
 
 $(document).on("click", "#create-tdm", function (e) {
+  createTdmMaps()
+});
+
+function createTdmMaps(){
   $.post(
     "https://i-tdm/get-maps",
     JSON.stringify({ isTdm: true }),
@@ -101,7 +96,7 @@ $(document).on("click", "#create-tdm", function (e) {
       setupCreateMatchScreen(data, true);
     }
   );
-});
+}
 
 $(document).on("keydown", function () {
   if (event.keyCode == 27) {
@@ -395,6 +390,96 @@ function showCreateOptions() {
   $(".card-container").css("display", "none");
 }
 
+function renderPlayer(player, team, isOwner, creatorId) {
+  return `
+    <div class="tdm-player-item tdm-player-item-${team} ${isOwner ? "tdm-owner" : ""}">
+      ${isOwner ? `<img class="tdm-owner-player" src="./assets/crown.png">` : ""}
+      <span>${player.name}</span>
+      ${
+        !isOwner
+          ? `<img class="tdm-delete-player"
+                  src="./assets/delete.png"
+                  data-team="${team}"
+                  data-player-id="${player.id}">`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderTeam(teamObj, team, isOwner, creatorId) {
+  return Object.values(teamObj)
+    .map(player => renderPlayer(player, team, isOwner, creatorId))
+    .join("");
+}
+
+function attachDeleteHandlers(map, matchId, isOwner,TDmap) {
+  if (!isOwner) return;
+
+  $(".tdm-delete-player").off("click").on("click", function () {
+    const team = $(this).data("team");
+    const playerId = $(this).data("player-id");
+    delete TDmap[`${team}Team`][playerId];
+    showTDMJoin(map, matchId,TDmap);
+  });
+}
+
+function showTDMJoin(map, matchId, currentPlayerId,TDmap) {
+  const match = TDmap;
+  const isOwner = currentPlayerId == match.creatorId;
+
+  let joinSkelt = `
+    <h2 id="back-btn-join-team-tdm" class="close">< Back</h2>
+
+    <div class="card-tdm-team tdm-join-card-blue">
+      <h2 class="card-title-tdm">Blue</h2>
+      <div class="tdm-player-list tdm-player-list-blue">
+        ${renderTeam(match.blueTeam, "blue", isOwner, match.creatorId)}
+      </div>
+      <button id="tdm-blue-btn" data-map="${map}" data-matchId="${matchId}" data-bucketId="${match.bucketId}" class="tdm-team-join-button tdm-blue-btn">Join</button>
+    </div>
+
+    <div class="card-tdm-team tdm-join-card-red">
+      <h2 class="card-title-tdm">Red</h2>
+      <div class="tdm-player-list tdm-player-list-red">
+        ${renderTeam(match.redTeam, "red", isOwner, match.creatorId)}
+      </div>
+      <button id="tdm-red-btn" data-map="${map}" data-matchId="${matchId}" data-bucketId="${match.bucketId}"  class="tdm-team-join-button tdm-red-btn">Join</button>
+    </div>`
+
+     if(isOwner){
+      const rightMenu = `<div class="card-tdm-team-right">
+      <h2 class="card-title-tdm">Settings</h2>
+
+      <select data-map="${map}" data-matchId="${matchId}" data-bucketId="${match.bucketId}" id="time" ${!isOwner ? "disabled" : ""}>
+        <option value="5" ${match.time === "5" ? "selected" : ""}>5 Min</option>
+        <option value="10" ${match.time === "10" ? "selected" : ""}>10 Min</option>
+        <option value="15" ${match.time === "15" ? "selected" : ""}>15 Min</option>
+        <option value="20" ${match.time === "20" ? "selected" : ""}>20 Min</option>
+        <option value="30" ${match.time === "30" ? "selected" : ""}>30 Min</option>
+      </select>
+
+      <select data-map="${map}" data-matchId="${matchId}" data-bucketId="${match.bucketId}" id="weapon" ${!isOwner ? "disabled" : ""}>
+        <option value="assault" ${match.weapon === "assault" ? "selected" : ""}>Assault</option>
+        <option value="pistol" ${match.weapon === "pistol" ? "selected" : ""}>Pistol</option>
+      </select>
+
+      <button data-map="${map}" data-matchId="${matchId}" data-bucketId="${match.bucketId}" id="start-tdm-owner"
+              class="tdm-team-join-button tdm-start-btn"
+              ${!isOwner ? "disabled" : ""}>
+        Start
+      </button>
+    </div>`
+      joinSkelt += rightMenu
+     }
+
+  $(".create-container").empty().append(joinSkelt).css("display", "flex");
+  $(".card-container").css("display", "none");
+
+  attachDeleteHandlers(map, matchId, isOwner,TDmap,currentPlayerId);
+}
+
+
 function showMapsTdm(maps){
   var container = `<h2 class="title-text">Create a lobby</h2>
   <h2 id="back-btn-select-map" class="close"> < Back</h2>
@@ -499,15 +584,92 @@ function showPasswordTdm() {
 
 $(document).on("click", "#create-tdm-pass", function () {
   const password = $("#tdm-password-input").val().trim();
-
-  console.log("Entered password:", password);
-
-  // Send to Lua
   $.post("https://i-tdm/createTDM", JSON.stringify({
     password: password,
     map:selectedMap
   }));
 });
+
+$(document).on("click", "#back-btn-create-pass-tdm", function () {
+  createTdmMaps()
+});
+
+$(document).on("click","#tdm-blue-btn", function() {
+  const map = $(this).attr("data-map");
+  const matchId = $(this).attr("data-matchId");
+  const bucketId = $(this).attr("data-bucketId");
+  $.post(
+    "https://i-tdm/join-tdm",
+    JSON.stringify({ map: map, matchId: String(matchId), bucketId: bucketId, team: "blue" }),
+    function (data) {
+      if (data) {
+      }
+    }
+  );
+});
+
+$(document).on("click","#tdm-red-btn", function() {
+  const map = $(this).attr("data-map");
+  const matchId = $(this).attr("data-matchId");
+  const bucketId = $(this).attr("data-bucketId");
+  $.post(
+    "https://i-tdm/join-tdm",
+    JSON.stringify({ map: map, matchId: String(matchId), bucketId: bucketId, team: "red" }),
+    function (data) {
+      if (data) {
+      }
+    }
+  );
+});
+
+$(document).on("click","#start-tdm-owner", function() {
+  const map = $(this).attr("data-map");
+  const matchId = $(this).attr("data-matchId");
+  const bucketId = $(this).attr("data-bucketId");
+  $.post(
+    "https://i-tdm/start-tdm",
+    JSON.stringify({ map: map, matchId: String(matchId), bucketId: bucketId }),
+    function (data) {
+      if (data) {
+      }
+    }
+  );
+});
+
+$(document).on("change","#weapon", function () {
+  const map = $(this).attr("data-map");
+  const matchId = $(this).attr("data-matchId");
+  $.post(
+    "https://i-tdm/tdm-update-settings",
+    JSON.stringify({ weapon: (this.value), map, matchId }),
+    function (data) {
+      if (data) {
+      }
+    }
+  );
+});
+
+$(document).on("change","#time", function () {
+  const map = $(this).attr("data-map");
+  const matchId = $(this).attr("data-matchId");
+  $.post(
+    "https://i-tdm/tdm-update-settings",
+    JSON.stringify({ time: +(this.value), map, matchId }),
+    function (data) {
+      if (data) {
+      }
+    }
+  );
+});
+
+$(document).on("click", ".tdm-delete-player", function () {
+  emitNet("i-tdm:server:kickPlayer",
+    map,
+    matchId,
+    $(this).data("citizenid")
+  );
+});
+
 
 function showTeamJoin(){
   

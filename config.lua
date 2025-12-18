@@ -72,6 +72,8 @@ Config.DM_Weapons = { --first weapon will be forced in hand
 Config.TDM_maps = {
     ['map1'] = {
         name = 'map1',
+        label = 'Military Base',
+        image = 'military.png',
         blueZone = {
             zones = {
                 vector2(-141.98475646973, -967.61022949219),
@@ -80,7 +82,7 @@ Config.TDM_maps = {
                 vector2(-138.01190185547, -958.60101318359)
             },
             minZ = 269.13491821289,
-            maxZ = 269.13537597656,
+            maxZ = 275.13537597656,
             name = 'blue-i-tdm-zone'
         },
         redZone = {
@@ -91,12 +93,25 @@ Config.TDM_maps = {
                 vector2(-162.40629577637, -1018.9063720703)
             },
             minZ = 254.1315612793,
-            maxZ = 254.13157653809,
+            maxZ = 264.13157653809,
             name = 'red-i-tdm-zone'
-        }
+        },
+        outerZone = {
+            zones = {
+            vector2(-154.48823547363, -938.01098632812),
+            vector2(-194.59796142578, -1014.3321533203),
+            vector2(-151.93811035156, -1032.0236816406),
+            vector2(-120.93641662598, -949.07476806641)
+            },
+            name = "outerpoly1",
+            minZ = 249.75653076172,
+            maxZ = 275.13516235352
+        },
     },
     ['map2'] = {
         name = 'map2',
+        label = 'Military Base',
+        image = 'military.png',
         blueZone = {
             zones = {
                 vector2(-454.16821289062, -1063.3009033203),
@@ -105,7 +120,7 @@ Config.TDM_maps = {
                 vector2(-450.27285766602, -1057.7987060547)
             },
             minZ = 40.663990020752,
-            maxZ = 40.813987731934,
+            maxZ = 45.813987731934,
             name = 'blue-i-tdm-zone'
         },
         redZone = {
@@ -116,9 +131,20 @@ Config.TDM_maps = {
                 vector2(-501.83108520508, -993.88128662109)
             },
             minZ = 40.729976654053,
-            maxZ = 40.814037322998,
+            maxZ = 45.814037322998,
             name = 'red-i-tdm-zone'
-        }
+        },
+        outerZone = {
+            zones = {
+                vector2(-200.0, -1030.0),
+                vector2(-120.0, -1030.0),
+                vector2(-120.0, -940.0),
+                vector2(-200.0, -940.0)
+            },
+            minZ = 240.0,
+            maxZ = 280.0,
+            name = 'outer-i-tdm-zone'
+        },
     }
 }
 
