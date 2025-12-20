@@ -548,6 +548,12 @@ RegisterNUICallback('get-active-matches', function(data, cb)
     end)
 end)
 
+RegisterNUICallback('get-active-matches-tdm', function(data, cb)
+    QBCore.Functions.TriggerCallback('i-tdm:get-active-matches-tdm', function(matches)
+        cb(matches)
+    end)
+end)
+
 RegisterNUICallback('join-dm', function(data, cb)
     sendToDmatchMap(data.map, data.matchId, data.bucketId)
     activeMatchId = data.matchId

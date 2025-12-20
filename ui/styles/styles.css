@@ -5,16 +5,6 @@
   font-style: italic;
 }
 
-/* body {
-  background-color: black;
-} */
-
-/* div {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  overflow-y: scroll;
-} */
-
 div::-webkit-scrollbar {
   display: none;
 }

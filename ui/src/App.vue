@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 import MainMenu from './screens/MainMenu.vue'
 import CreateMenu from './screens/CreateMenu.vue'
@@ -8,6 +8,7 @@ import MapSelect from './screens/MapSelect.vue'
 import TdmJoin from './screens/TdmJoin.vue'
 import TdmPassword from './screens/TdmPassword.vue'
 import ActiveMatches from './screens/ActiveMatches.vue'
+import ActiveTdms from './screens/ActiveTdms.vue'
 
 import Hud from './components/Hud.vue'
 import Toasts from './components/Toasts.vue'
@@ -42,6 +43,14 @@ function closeUI() {
   })
 }
 
+watch(uiVisible, (isOpen) => {
+  if (isOpen) {
+    document.body.style.backgroundColor = 'rgba(0, 0, 0, 0.61)'
+  } else {
+    document.body.style.backgroundColor = 'transparent'
+  }
+})
+
 onMounted(() => {
   window.addEventListener('message', (event) => {
     const data = event.data
@@ -66,11 +75,15 @@ onMounted(() => {
         screen.value = 'activeMatches'
         payload.value = data.matches
         break
+      case 'show-active-matches-tdm':
+        console.log('tdmjoin',JSON.stringify(data.maps))
+        screen.value = 'activeTdms'
+        payload.value = data.matches
+        break
     }
   })
 
   window.addEventListener('keydown', (e) => {
-    console.log(JSON.stringify(e))
     if (e.key === 'Escape') closeUI()
   })
 })
@@ -83,7 +96,8 @@ const currentComponent = computed(() => {
     map: MapSelect,
     tdmJoin: TdmJoin,
     tdmPassword: TdmPassword,
-    activeMatches: ActiveMatches
+    activeMatches: ActiveMatches,
+    activeTdms: ActiveTdms
   }[screen.value]
 })
 </script>

@@ -31,16 +31,14 @@ function joinDM() {
 }
 
 function joinTDM() {
-  // You can later redirect this to a TDM-specific join screen
-  // For now it mirrors your original behavior
-  fetch(`https://${getResourceName()}/get-active-matches`, {
+  fetch(`https://${getResourceName()}/get-active-matches-tdm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }
   })
     .then(res => res.json())
     .then(matches => {
       emit('change', {
-        screen: 'activeMatches',
+        screen: 'activeTdms',
         payload: matches
       })
     })

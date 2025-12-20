@@ -133,6 +133,10 @@ RegisterNetEvent("i-tdm:server:update-settings", function(settings)
     if settings.time then
         match.time = settings.time
     end
+    
+    if settings.maxMembers then
+        match.maxMembers = settings.maxMembers
+    end
 
     --TriggerClientEvent("i-tdm:client:updateLobby", -1, settings.map, settings.matchId, match)
 end)
@@ -218,22 +222,42 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches', function(source, cb)
     cb(activeMatches)
 end)
 
+QBCore.Functions.CreateCallback('i-tdm:get-active-matches-tdm', function(source, cb)
+    local activeMatches = {}
+    for _, v in pairs(Config.TDM_maps) do
+        for key, val in pairs(TDmaps[v.name].activeMatches) do
+            if TDmaps[v.name].activeMatches[key] ~= nil then
+                activeMatches[#activeMatches + 1] = {
+                    matchId = val.id,
+                    map = v.name,
+                    bucketId = val.bucketId,
+                    members = (val.redTeam and #val.redTeam or 0) + (val.blueTeam and #val.blueTeam or 0),
+                    creator = val.creator,
+                    mapLabel = v.label,
+                    maxMembers = val.maxMembers
+                }
+            end
+        end
+    end
+    cb(activeMatches)
+end)
+
 QBCore.Functions.CreateCallback('i-tdm:server:createTDMatch', function(source, cb, map, bucketId)
     local creator = GetPlayerName(source)
     local creatorId = source
-    local DMTimeInMs = 5 * 60 * 1000
     local id = #TDmaps[map].activeMatches + 1
     TDmaps[map].activeMatches[id] = {
         id = id,
         redTeam = {},
         blueTeam = {},
         bucketId = bucketId,
-        time = DMTimeInMs,
+        time = 5,
         endingTime = nil,
         creator = creator,
         creatorId = creatorId,
         weapon = 'assault',
         password = '',
+        maxMembers = 10,
         started = false
     }
     cb(id,TDmaps[map].activeMatches[id])

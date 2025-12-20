@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 
 /* =========================
-   Props / Emits
+  Props / Emits
 ========================= */
 const props = defineProps({
   payload: {
@@ -14,7 +14,7 @@ const props = defineProps({
 const emit = defineEmits(['change'])
 
 /* =========================
-   LOCAL REACTIVE STATE
+  LOCAL REACTIVE STATE
 ========================= */
 const map = ref(null)
 const matchId = ref(null)
@@ -22,14 +22,14 @@ const playerId = ref(null)
 const match = ref(null)
 
 /* =========================
-   Derived State
+  Derived State
 ========================= */
 const isOwner = computed(() => {
   return match.value && playerId.value === match.value.creatorId
 })
 
 /* =========================
-   Watch payload changes
+  Watch payload changes
 ========================= */
 watch(
   () => props.payload,
@@ -40,13 +40,12 @@ watch(
     matchId.value = newPayload.matchId
     playerId.value = newPayload.playerId
     match.value = newPayload.mapTable
-    console.log(JSON.stringify(match.value))
   },
   { immediate: true }
 )
 
 /* =========================
-   FiveM-safe helper
+  FiveM-safe helper
 ========================= */
 function getResourceName() {
   return typeof GetParentResourceName === 'function'
@@ -55,7 +54,7 @@ function getResourceName() {
 }
 
 /* =========================
-   Actions
+  Actions
 ========================= */
 function joinTeam(team) {
   if (!match.value) return
@@ -107,6 +106,18 @@ function updateTime(value) {
       map: map.value,
       matchId: matchId.value,
       time: Number(value)
+    })
+  })
+}
+
+function updateMemberCount(value) {
+  fetch(`https://${getResourceName()}/tdm-update-settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      map: map.value,
+      matchId: matchId.value,
+      maxMembers: Number(value)
     })
   })
 }
@@ -215,6 +226,7 @@ function goBack() {
     <div v-if="isOwner" class="card-tdm-team-right">
       <h2 class="card-title-tdm">Settings</h2>
 
+      <label for="">Total Time</label>
       <select class="tdm-select" :value="match.time" @change="updateTime($event.target.value)">
         <option value="5">5 Min</option>
         <option value="10">10 Min</option>
@@ -223,9 +235,20 @@ function goBack() {
         <option value="30">30 Min</option>
       </select>
 
+      <label for="">Weapon Class</label>
       <select class="tdm-select" :value="match.weapon" @change="updateWeapon($event.target.value)">
         <option value="assault">Assault</option>
         <option value="pistol">Pistol</option>
+      </select>
+
+      <label for="">Max Members</label>
+      <select class="tdm-select" :value="match.maxMembers" @change="updateMemberCount($event.target.value)">
+        <option value="2">2</option>
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12">12</option>
       </select>
 
       <button class="tdm-team-join-button tdm-start-btn" @click="startMatch">

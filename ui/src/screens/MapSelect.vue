@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref,watch } from 'vue'
 
 /* =========================
    Props / Emits
@@ -17,11 +17,20 @@ const emit = defineEmits(['change'])
    Local State
 ========================= */
 const selectedMap = ref(null)
-const maps = props.payload.maps
+const maps = ref(null)
 const isTdm = props.payload.isTdm
 
+watch(
+  () => props.payload,
+  (newPayload) => {
+    if (!newPayload) return
+    maps.value = newPayload.maps
+  },
+  { immediate: true }
+)
+
 /* =========================
-   FiveM-safe helper
+  FiveM-safe helper
 ========================= */
 function getResourceName() {
   return window.GetParentResourceName
@@ -30,7 +39,7 @@ function getResourceName() {
 }
 
 /* =========================
-   Confirm selection
+  Confirm selection
 ========================= */
 function confirmSelection() {
   if (!selectedMap.value) return
@@ -57,7 +66,7 @@ function confirmSelection() {
 }
 
 /* =========================
-   Back
+  Back
 ========================= */
 function goBack() {
   emit('change', 'create')
@@ -81,7 +90,7 @@ function goBack() {
         v-for="map in maps"
         :key="map.name"
         class="map"
-        :style="`background-image: url(/assets/maps/${map.image})`"
+        :style="`background-image: url(assets/maps/${map.image})`"
       >
         <div
           class="map-name-container"
