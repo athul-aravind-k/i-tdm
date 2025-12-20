@@ -21,7 +21,7 @@ const emit = defineEmits(['change'])
             <div class="icon-box green">
               <Plus />
             </div>
-            <div>
+            <div class="menu-item-text">
               <h2>Create Lobby</h2>
               <p>Start a new match and invite players</p>
             </div>
@@ -31,7 +31,7 @@ const emit = defineEmits(['change'])
             <div class="icon-box blue">
               <Users />
             </div>
-            <div>
+            <div class="menu-item-text">
               <h2>Join Game</h2>
               <p>Browse and join active matches</p>
             </div>
@@ -41,7 +41,7 @@ const emit = defineEmits(['change'])
             <div class="icon-box yellow">
               <Trophy />
             </div>
-            <div>
+            <div class="menu-item-text">
               <h2>Leaderboard</h2>
               <p>View top players and rankings</p>
             </div>
@@ -95,6 +95,17 @@ const emit = defineEmits(['change'])
   height: 70%;
   align-items: center;
   justify-content: center;
+}
+
+.menu-item-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  p{
+    margin-block-start: 0 !important;
+    margin-block-end: 0 !important;
+  }
 }
 
 .panel {
