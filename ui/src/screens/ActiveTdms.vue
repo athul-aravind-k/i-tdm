@@ -11,7 +11,6 @@ import {
 const props = defineProps({
   payload: Object
 })
-
 const emit = defineEmits(['change'])
 
 const searchTerm = ref('')
@@ -28,8 +27,7 @@ const filteredMatches = computed(() =>
 
 function handleJoin(match) {
   if (match.members >= match.maxMembers) return
-
-  if (match.password && match.password.length > 0) {
+  if (match.password && match.password?.length > 0) {
     selectedMatch.value = match
   } else {
     onJoinMatch(match.matchId, match.map)
@@ -44,7 +42,7 @@ function handlePasswordSubmit() {
 
 function onJoinMatch(matchId,map,matchPass,pass) {
   if(props.payload.mode==='tdm'){
-    if(pass.length>0){
+    if(pass?.length>0){
       if(pass===matchPass){
         joinTDM(matchId,map)
       } else {
@@ -80,7 +78,7 @@ function joinTDM(matchId,map) {
 
 <template>
   <div class="page">
-    <div class="content">
+    <div class="content-atdm">
 
       <!-- HEADER -->
       <div class="header">
@@ -102,7 +100,7 @@ function joinTDM(matchId,map) {
       <div class="search">
         <Search class="search-icon" />
         <input
-          class="input"
+          class="input-atdm"
           placeholder="Search by map or creator..."
           v-model="searchTerm"
         />
@@ -124,17 +122,17 @@ function joinTDM(matchId,map) {
 
           <div class="info">
             <div>
-              <span>Map</span>
+              <span class="atdm-grey-text">Map</span>
               <p>{{ match.mapLabel }}</p>
             </div>
 
             <div>
-              <span>Creator</span>
+              <span class="atdm-grey-text">Creator</span>
               <p>{{ match.creator }}</p>
             </div>
 
             <div>
-              <span>Players</span>
+              <span class="atdm-grey-text">Players</span>
               <p>
                 <Users size="14" />
                 {{ match.members }}/{{ match.maxMembers }}
@@ -142,7 +140,7 @@ function joinTDM(matchId,map) {
             </div>
 
             <div v-if="payload.mode === 'tdm'">
-              <span>Weapon</span>
+              <span class="atdm-grey-text">Weapon</span>
               <p>
                 <Shield size="14" />
                 {{ match.weapon }}
@@ -222,7 +220,7 @@ function joinTDM(matchId,map) {
   color: white;
 }
 
-.content {
+.content-atdm {
   max-width: 1200px;
   margin: auto;
   padding: 32px;
@@ -261,7 +259,13 @@ function joinTDM(matchId,map) {
   opacity: 0.5;
 }
 
-.input {
+.atdm-grey-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem; 
+  margin-bottom: 0.25rem;
+}
+
+.input-atdm {
   width: 95%;
   padding: 10px 12px 10px 36px;
   background: rgba(0, 0, 0, 0.6);
