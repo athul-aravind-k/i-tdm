@@ -54,7 +54,7 @@ const emit = defineEmits(['change'])
   </div>
 </template>
 
-<style>
+<style scoped>
 /* ROOT */
 .menu-root {
   width: 100%;
