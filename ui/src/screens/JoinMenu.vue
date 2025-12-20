@@ -24,6 +24,7 @@ function joinDM() {
     .then(res => res.json())
     .then(matches => {
       emit('change', {
+        screen: 'activeTdms',
         payload: {
           mode: 'deathmatch',
           matches
