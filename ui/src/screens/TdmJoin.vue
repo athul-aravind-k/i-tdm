@@ -11,7 +11,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'close'])
 
 /* =========================
   LOCAL REACTIVE STATE
@@ -135,11 +135,11 @@ function startMatch() {
     })
   })
 
-  emit('change', 'main')
+  emit('close')
 }
 
 function goBack() {
-  emit('change', 'create')
+  emit('change', 'main')
 }
 </script>
 

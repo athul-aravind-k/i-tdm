@@ -59,7 +59,7 @@ RegisterNetEvent("i-tdm:server:joinTeam", function(data)
         source = src,
         name = Player.PlayerData.charinfo.firstname .. " " ..Player.PlayerData.charinfo.lastname
     }
-    TriggerClientEvent("i-tdm:client:updateLobby", -1, data.map, matchId, match)
+    TriggerClientEvent("i-tdm:client:updateLobby", -1, data.map, tonumber(data.matchId), match)
 end)
 
 RegisterNetEvent("i-tdm:server:start-tdm", function(data)

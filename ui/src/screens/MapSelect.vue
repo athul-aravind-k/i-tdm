@@ -11,7 +11,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change','close'])
 
 /* =========================
    Local State
@@ -54,7 +54,7 @@ function confirmSelection() {
       })
     })
 
-    emit('change', 'main')
+    emit('close')
     return
   }
 
