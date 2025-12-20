@@ -11,7 +11,7 @@ import {
 const props = defineProps({
   payload: Object
 })
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change','close'])
 
 const searchTerm = ref('')
 const selectedMatch = ref(null)
@@ -60,7 +60,7 @@ function onJoinMatch(matchId,map,matchPass,pass) {
       })
     })
 
-    emit('change', 'main')
+    emit('close')
   }
 }
 
