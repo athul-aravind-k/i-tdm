@@ -121,7 +121,7 @@ function goBack() {
 .ms-root {
   width: 100%;
   height: 100vh;
-  background: black;
+  background: radial-gradient(circle at top, #111, #000);
   font-family: Arial, Helvetica, sans-serif;
   overflow: hidden;
 }
