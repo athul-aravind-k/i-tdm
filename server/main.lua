@@ -45,7 +45,6 @@ RegisterNetEvent('i-tdm:server:send-kill-msg', function(attackerPlayerId, victim
 end)
 
 RegisterNetEvent("i-tdm:server:joinTeam", function(data)
-    QBCore.Debug(data)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
@@ -64,7 +63,6 @@ RegisterNetEvent("i-tdm:server:joinTeam", function(data)
 end)
 
 RegisterNetEvent("i-tdm:server:start-tdm", function(data)
-    QBCore.Debug(data)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
@@ -234,7 +232,9 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches-tdm', function(source,
                     members = (val.redTeam and #val.redTeam or 0) + (val.blueTeam and #val.blueTeam or 0),
                     creator = val.creator,
                     mapLabel = v.label,
-                    maxMembers = val.maxMembers
+                    maxMembers = val.maxMembers,
+                    image = v.image,
+                    password = val.password
                 }
             end
         end
@@ -242,7 +242,7 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches-tdm', function(source,
     cb(activeMatches)
 end)
 
-QBCore.Functions.CreateCallback('i-tdm:server:createTDMatch', function(source, cb, map, bucketId)
+QBCore.Functions.CreateCallback('i-tdm:server:createTDMatch', function(source, cb, map, bucketId,pass)
     local creator = GetPlayerName(source)
     local creatorId = source
     local id = #TDmaps[map].activeMatches + 1
@@ -256,11 +256,16 @@ QBCore.Functions.CreateCallback('i-tdm:server:createTDMatch', function(source, c
         creator = creator,
         creatorId = creatorId,
         weapon = 'assault',
-        password = '',
+        password = pass,
         maxMembers = 10,
         started = false
     }
     cb(id,TDmaps[map].activeMatches[id])
+end)
+
+QBCore.Functions.CreateCallback('i-tdm:server:get-tdm-details', function(source, cb, matchId,map)
+    local activematch = TDmaps[map].activeMatches[matchId]
+    cb(activematch)
 end)
 
 

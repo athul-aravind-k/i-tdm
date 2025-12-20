@@ -72,13 +72,17 @@ onMounted(() => {
         break
 
       case 'show-active-matches':
+        console.log('dmjoin',JSON.stringify(data.maps))
         screen.value = 'activeMatches'
         payload.value = data.matches
         break
       case 'show-active-matches-tdm':
         console.log('tdmjoin',JSON.stringify(data.maps))
         screen.value = 'activeTdms'
-        payload.value = data.matches
+        payload.value = {
+          mode: 'tdm',
+          matches: data.matches
+        }
         break
     }
   })

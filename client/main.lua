@@ -246,7 +246,6 @@ local function createZones(mapName)
 end
 
 local function showJoinUi(map,mapTable)
-    print(map)
     SendNUIMessage({
         type = "show-tdm-join",
         matchId = activeTDMId,
@@ -265,6 +264,15 @@ local function startTeamDeathMatch(map,password)
             showJoinUi(map,mapTable)
         end, map, bucketId,password)
     end)
+end
+
+local function joinTeamDeathMatch(matchId,map)
+    currTDmap = map
+    currBucket = GetEntityPopulationType(GetEntityCoords(ped))
+    QBCore.Functions.TriggerCallback('i-tdm:server:get-tdm-details', function(mapTable)
+        activeTDMId = matchId
+        showJoinUi(map,matchId,mapTable)
+    end, matchId,map)
 end
 
 RegisterNetEvent("i-tdm:client:updateLobby", function(map, matchId, matchData)
@@ -569,6 +577,13 @@ RegisterNUICallback("createTDM", function(data, cb)
     local password = data.password
     local map = data.map
     startTeamDeathMatch(map,password)
+    cb("ok")
+end)
+
+RegisterNUICallback("join-tdm-lobby", function(data, cb)
+    local matchId = data.matchId
+    local map = data.map
+    joinTeamDeathMatch(matchId,map)
     cb("ok")
 end)
 

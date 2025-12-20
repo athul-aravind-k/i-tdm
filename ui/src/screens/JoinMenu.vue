@@ -24,8 +24,10 @@ function joinDM() {
     .then(res => res.json())
     .then(matches => {
       emit('change', {
-        screen: 'activeMatches',
-        payload: matches
+        payload: {
+          mode: 'deathmatch',
+          matches
+        }
       })
     })
 }
@@ -39,7 +41,10 @@ function joinTDM() {
     .then(matches => {
       emit('change', {
         screen: 'activeTdms',
-        payload: matches
+        payload: {
+          mode: 'tdm',
+          matches
+        }
       })
     })
 }
