@@ -8,6 +8,10 @@ const emit = defineEmits(['change'])
   <div class="menu-root">
     <!-- Background -->
     <div class="background">
+      <img
+        src="/assets/bg/main.png"
+        alt="Background"
+      />
       <div class="overlay"></div>
     </div>
 

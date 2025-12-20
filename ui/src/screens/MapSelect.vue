@@ -62,10 +62,10 @@ function goBack() {
 <template>
   <div class="ms-root">
     <div class="ms-bg">
-      <!-- <img
-        src="https://images.unsplash.com/photo-1562281302-809108fd533c"
+      <img
+        src="/assets/bg/map.png"
         alt="Background"
-      /> -->
+      />
       <div class="ms-overlay"></div>
     </div>
 

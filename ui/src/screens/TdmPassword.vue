@@ -58,7 +58,7 @@ function confirm() {
     <!-- Background -->
     <div class="ls-bg">
       <img
-        src="https://images.unsplash.com/photo-1741550005120-6e8bfab52992"
+        src="/assets/bg/password.png"
         alt="Background"
       />
       <div class="ls-overlay"></div>
