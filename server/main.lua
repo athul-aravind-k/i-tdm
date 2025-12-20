@@ -119,10 +119,10 @@ RegisterNetEvent("i-tdm:server:update-settings", function(settings)
     if not Player then return end
 
     local citizenid = Player.PlayerData.citizenid
-    local match = TDmaps[settings.map].activeMatches[settings.matchId]
+    local match = TDmaps[settings.map].activeMatches[tonumber(settings.matchId)]
     if not match then return end
 
-    if citizenid ~= match.creatorId then return end
+    if src ~= match.creatorId then return end
 
     if settings.weapon then
         match.weapon = settings.weapon
@@ -225,17 +225,21 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches-tdm', function(source,
     for _, v in pairs(Config.TDM_maps) do
         for key, val in pairs(TDmaps[v.name].activeMatches) do
             if TDmaps[v.name].activeMatches[key] ~= nil then
-                activeMatches[#activeMatches + 1] = {
-                    matchId = val.id,
-                    map = v.name,
-                    bucketId = val.bucketId,
-                    members = (val.redTeam and #val.redTeam or 0) + (val.blueTeam and #val.blueTeam or 0),
-                    creator = val.creator,
-                    mapLabel = v.label,
-                    maxMembers = val.maxMembers,
-                    image = v.image,
-                    password = val.password
-                }
+                QBCore.Debug(TDmaps)
+                if TDmaps[v.name].activeMatches[key].started~=true then
+                    activeMatches[#activeMatches + 1] = {
+                        matchId = val.id,
+                        map = v.name,
+                        bucketId = val.bucketId,
+                        members = (val.redTeam and #val.redTeam or 0) + (val.blueTeam and #val.blueTeam or 0),
+                        creator = val.creator,
+                        mapLabel = v.label,
+                        maxMembers = val.maxMembers,
+                        image = v.image,
+                        password = val.password,
+                        weapon = val.weapon
+                    }
+                end
             end
         end
     end
@@ -300,7 +304,7 @@ CreateThread(function()
     end
 end)
 
-QBCore.Commands.Add('leavedm', 'Leave Death Match', {}, false, function(source, args)
+QBCore.Commands.Add('leavedm', 'Leave Death Match/ Team Death Match', {}, false, function(source, args)
     TriggerClientEvent('i-tdm:client:stop-dm', source)
 end)
 
