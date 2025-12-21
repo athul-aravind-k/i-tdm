@@ -12,6 +12,7 @@ import ActiveTdms from './screens/ActiveTdms.vue'
 
 import Hud from './components/Hud.vue'
 import Toasts from './components/Toasts.vue'
+import Leaderboard from './screens/Leaderboard.vue'
 
 const uiVisible = ref(false)
 const screen = ref('main')
@@ -103,14 +104,20 @@ const currentComponent = computed(() => {
     tdmJoin: TdmJoin,
     tdmPassword: TdmPassword,
     activeMatches: ActiveMatches,
-    activeTdms: ActiveTdms
+    activeTdms: ActiveTdms,
+    leaderboard: Leaderboard
   }[screen.value]
 })
 </script>
 
 <template>
   <!-- MAIN UI -->
-  <div v-if="uiVisible" @keyup.esc="closeUI" class="popup">
+  <div 
+    v-if="uiVisible" 
+    @keyup.esc="closeUI" 
+    class="popup"
+    :style="currentComponent === Leaderboard ? { height: '100%', width: '100%', overflowY: 'auto' } : {}"
+  >
     <component
       :is="currentComponent"
       :payload="payload"
