@@ -511,6 +511,16 @@ RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
     end
 end)
 
+RegisterNetEvent('tdm:client:kick-player-tdm', function()
+    SendNUIMessage({
+        type = "close-ui",
+        message = {}
+    })
+    SetNuiFocus(false, false)
+    QBCore.Functions.Notify('You have been kicked from the match', 'error', 2000)
+
+end)
+
 AddEventHandler('onResourceStart', function(resource)
     if (GetCurrentResourceName() ~= resource) then
         return
@@ -594,6 +604,10 @@ end)
 
 RegisterNUICallback('start-tdm', function(data, cb)
     TriggerServerEvent('i-tdm:server:start-tdm',data)
+end)
+
+RegisterNUICallback('kick-tdm-player', function(data, cb)
+    TriggerServerEvent('i-tdm:server:kick-tdm-player',data)
 end)
 
 

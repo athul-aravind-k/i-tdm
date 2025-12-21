@@ -60,6 +60,10 @@ onMounted(() => {
         uiVisible.value = true
         screen.value = 'main'
         break
+      case 'close-ui':
+        uiVisible.value = false
+        screen.value = 'main'
+        break
 
       case 'show-tdm-join':
         screen.value = 'tdmJoin'
@@ -72,12 +76,10 @@ onMounted(() => {
         break
 
       case 'show-active-matches':
-        console.log('dmjoin',JSON.stringify(data.maps))
         screen.value = 'activeMatches'
         payload.value = data.matches
         break
       case 'show-active-matches-tdm':
-        console.log('tdmjoin',JSON.stringify(data.maps))
         screen.value = 'activeTdms'
         payload.value = {
           mode: 'tdm',

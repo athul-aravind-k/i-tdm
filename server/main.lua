@@ -139,19 +139,22 @@ RegisterNetEvent("i-tdm:server:update-settings", function(settings)
     --TriggerClientEvent("i-tdm:client:updateLobby", -1, settings.map, settings.matchId, match)
 end)
 
-RegisterNetEvent("i-tdm:server:kickPlayer", function(map, matchId, citizenid)
+RegisterNetEvent("i-tdm:server:kick-tdm-player", function(data)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
+    local kickedPlayer = QBCore.Functions.GetPlayer(data.playerId)
+    if not kickedPlayer then return end
 
-    local match = TDmaps[map].activeMatches[matchId]
+    local citizenid = kickedPlayer.PlayerData.citizenid
+
+    local match = TDmaps[data.map].activeMatches[data.matchId]
     if not match then return end
 
-    if Player.PlayerData.citizenid ~= match.creatorId then return end
+    if src ~= match.creatorId then return end
 
     match.redTeam[citizenid] = nil
     match.blueTeam[citizenid] = nil
 
+    TriggerClientEvent("tdm:client:kick-player-tdm", data.playerId)
     TriggerClientEvent("tdm:client:updateLobby", -1, map, matchId, match)
 end)
 
