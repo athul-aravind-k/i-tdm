@@ -136,7 +136,7 @@ RegisterNetEvent("i-tdm:server:update-settings", function(settings)
         match.maxMembers = settings.maxMembers
     end
 
-    --TriggerClientEvent("i-tdm:client:updateLobby", -1, settings.map, settings.matchId, match)
+    TriggerClientEvent("i-tdm:client:updateLobby", -1, settings.map, settings.matchId, match)
 end)
 
 RegisterNetEvent("i-tdm:server:kick-tdm-player", function(data)
@@ -154,8 +154,8 @@ RegisterNetEvent("i-tdm:server:kick-tdm-player", function(data)
     match.redTeam[citizenid] = nil
     match.blueTeam[citizenid] = nil
 
-    TriggerClientEvent("tdm:client:kick-player-tdm", data.playerId)
-    TriggerClientEvent("tdm:client:updateLobby", -1, map, matchId, match)
+    TriggerClientEvent("i-tdm:client:kick-player-tdm", data.playerId)
+    TriggerClientEvent("i-tdm:client:updateLobby", -1, map, matchId, match)
 end)
 
 
@@ -323,7 +323,7 @@ AddEventHandler("playerDropped", function()
             match.redTeam[citizenid] = nil
             match.blueTeam[citizenid] = nil
 
-            TriggerClientEvent("tdm:client:updateLobby", -1, map, match.id, match)
+            TriggerClientEvent("i-tdm:client:updateLobby", -1, map, match.id, match)
         end
     end
 end)

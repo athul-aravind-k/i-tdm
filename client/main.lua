@@ -511,7 +511,7 @@ RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
     end
 end)
 
-RegisterNetEvent('tdm:client:kick-player-tdm', function()
+RegisterNetEvent('i-tdm:client:kick-player-tdm', function()
     SendNUIMessage({
         type = "close-ui",
         message = {}
