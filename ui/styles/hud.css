@@ -10,7 +10,9 @@
 
 .toast {
   margin-bottom: 16px;
-  padding: 8px;
+  padding: 5px;
+  display: flex;
+  align-items: center;
 }
 
 .toast-kill {

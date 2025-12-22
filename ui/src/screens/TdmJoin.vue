@@ -137,7 +137,7 @@ function goBack() {
   <div class="tdm-root">
     <!-- Background -->
     <div class="tdm-bg">
-      <img :src="'/assets/bg/team.png'" alt="Background" />
+      <img src="/assets/bg/team.png" alt="Background" />
       <div class="tdm-overlay"></div>
     </div>
 

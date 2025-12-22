@@ -1,15 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-/* =========================
-   Toast State
-========================= */
 const toasts = ref([])
 let counter = 0
 
-/* =========================
-   Add Toast
-========================= */
 function addToast({ killer, killed, type }) {
   const id = counter++
 
@@ -26,9 +20,6 @@ function addToast({ killer, killed, type }) {
   }, 5000)
 }
 
-/* =========================
-   FiveM Message Listener
-========================= */
 onMounted(() => {
   window.addEventListener('message', (event) => {
     if (event.data.type === 'kill-msg') {
