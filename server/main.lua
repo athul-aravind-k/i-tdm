@@ -78,6 +78,7 @@ RegisterNetEvent("i-tdm:server:start-tdm", function(data)
     local timeInMs = match.time * 60 * 1000
     local endingTime = os.time() + (timeInMs / 1000)
     match.endingTime = endingTime
+    match.started = true
 
     for citizenid, playerData in pairs(match.redTeam) do
         if playerData.source then
