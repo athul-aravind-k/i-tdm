@@ -223,7 +223,7 @@ function goBack() {
               <label>
                 Total Time
                 <select :value="match.time" :disabled="!isOwner" @change="updateTime($event.target.value)">
-                  <option v-for="n in [5, 10, 15, 20, 30]" :key="n" :value="n">
+                  <option v-for="n in [1, 5, 10, 15, 20, 30]" :key="n" :value="n">
                     {{ n }} Min
                   </option>
                 </select>

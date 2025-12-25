@@ -22,7 +22,7 @@ function addToast({ killer, killed, type }) {
 
 onMounted(() => {
   window.addEventListener('message', (event) => {
-    if (event.data.type === 'kill-msg') {
+    if (event.data.type === 'kill-msg' || event.data.type ==='kill-msg-tdm' ) {
       addToast(event.data.message)
     }
   })

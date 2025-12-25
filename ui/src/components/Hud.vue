@@ -13,6 +13,8 @@ const isTDM = ref(false)
 const visible = ref(false)
 const timerVisible = ref(false)
 const timeRemaining = ref(0)
+const blueTeamKills = ref(0)
+const redTeamKills = ref(0)
 
 let timerInterval = null
 let timerEnd = 0
@@ -25,9 +27,7 @@ const stats = reactive({
   kills: 0,
   deaths: 0,
   ammo: 0,
-  clip: 0,
-  blueTeamKills: 0,
-  redTeamKills: 0
+  clip: 0
 })
 
 const kd = computed(() =>
@@ -36,9 +36,13 @@ const kd = computed(() =>
     : (stats.kills / stats.deaths).toFixed(2)
 )
 
-const hpPer = computed(() =>
-  ((stats.hp/ 200 )*100).toFixed(2)
-) 
+const hpPer = computed(() => {
+  const minHp = 100
+  const maxHp = 200
+  const hp = Math.min(Math.max(stats.hp, minHp), maxHp)
+  return (((hp - minHp) / (maxHp - minHp)) * 100).toFixed(2)
+})
+
 
 const minutes = computed(() =>
   Math.floor(timeRemaining.value / 60)
@@ -67,16 +71,26 @@ onMounted(() => {
     switch (data.type) {
       case 'toggle-hud':
         visible.value = data.message.bool
+        if(data?.message.isTdm){
+          isTDM.value = true 
+        }
         if (data.message.bool) {
           startTimerMs(data.message.totalTime)
         } else {
           stopTimer()
+          isTDM.value = false
         }
         break
 
       case 'update-stats':
         Object.assign(stats, data.message)
-        break
+      break
+
+      case 'kill-msg-tdm':
+        console.log(JSON.stringify(data))
+        redTeamKills.value = data?.message?.redTeamKills
+        blueTeamKills.value = data?.message?.blueTeamKills
+      break
     }
   })
 })
@@ -124,7 +138,7 @@ function stopTimer() {
           </div>
           <div>
             <div class="label">Blue Team</div>
-            <div class="value">{{ stats.blueTeamKills }}</div>
+            <div class="value">{{ blueTeamKills }}</div>
           </div>
         </div>
 
@@ -134,7 +148,7 @@ function stopTimer() {
           </div>
           <div>
             <div class="label">Red Team</div>
-            <div class="value">{{ stats.blueTeamKills }}</div>
+            <div class="value">{{ redTeamKills }}</div>
           </div>
         </div>
       </div>
