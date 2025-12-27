@@ -396,6 +396,8 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
         Wait(2000)
         SetEntityInvincible(ped, false)
         sendToTeamSpawn()
+        SetPedArmour(ped, 100)
+        SetEntityHealth(ped, 200)
     end, mapName, matchId,true)
 
     local wasInsideOuter = nil
