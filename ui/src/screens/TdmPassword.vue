@@ -1,6 +1,7 @@
 <script setup>
 import { ArrowLeft, Globe, Lock } from "lucide-vue-next";
 import { ref } from 'vue'
+import { notificationStore } from "../components/uiNotificationStore";
 
 const props = defineProps({
   payload: {
@@ -31,6 +32,7 @@ function createTDM() {
       password: isPrivate.value ? password.value.trim():''
     })
   })
+  notificationStore.show('success', 'Lobby Created');
 }
 
 function goBack() {

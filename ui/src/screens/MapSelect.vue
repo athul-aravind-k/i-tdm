@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { ArrowLeft, Check } from 'lucide-vue-next'
+import { notificationStore } from '../components/uiNotificationStore'
 
 const props = defineProps({
   payload: {
@@ -42,6 +43,7 @@ function confirmSelection() {
         selectedMap: selectedMap.value
       })
     })
+    notificationStore.show('success', 'Starting Deathmatch');
 
     emit('close')
     return

@@ -7,6 +7,7 @@ import {
   Shield,
   Search
 } from 'lucide-vue-next'
+import { notificationStore } from '../components/uiNotificationStore'
 
 const props = defineProps({
   payload: Object
@@ -46,6 +47,7 @@ function onJoinMatch(matchId,map,matchPass,pass) {
       if(pass===matchPass){
         joinTDM(matchId,map)
       } else {
+        notificationStore.show('error', 'Invalid Password');
         invalidPass.value = true
       }
     }else{
@@ -187,7 +189,6 @@ function joinTDM(matchId,map) {
           @keyup.enter="handlePasswordSubmit; invalidPass=false"
           autofocus
         />
-        <span v-if="invalidPass">Invalid password</span>
 
         <div class="modal-actions">
           <button

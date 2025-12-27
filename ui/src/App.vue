@@ -14,6 +14,8 @@ import Hud from './components/Hud.vue'
 import Toasts from './components/Toasts.vue'
 import Leaderboard from './screens/Leaderboard.vue'
 import ZoneWarning from './screens/ZoneWarning.vue'
+import UIToast from './components/UIToast.vue'
+import { notificationStore } from './components/uiNotificationStore'
 
 const uiVisible = ref(false)
 const screen = ref('main')
@@ -131,4 +133,8 @@ const currentComponent = computed(() => {
   <Toasts />
   <Hud />
   <ZoneWarning/>
+  <UIToast
+    :notification="notificationStore.current"
+    @close="notificationStore.clear()"
+  />
 </template>
