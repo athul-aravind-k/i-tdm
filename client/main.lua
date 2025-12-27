@@ -1,16 +1,12 @@
 local QBCore = exports['qb-core']:GetCoreObject()
-local blueZone = {}
-local redZone = {}
 local deathMatchZone = {}
 local startBlip
 local currDmap
 local currTDmap
-insideBlue = false
-insideRed = false
-insideDmz = false
-InMatch = false
-inTDM = false
-inDMatch = false
+local insideDmz = false
+local InMatch = false
+local inTDM = false
+local inDMatch = false
 local currBucket
 local activeMatchId
 local activeTDMId
@@ -22,11 +18,6 @@ local TdmMap = nil
 local HealThread = nil
 local InOwnSpawn = false
 local InEnemySpawn = false
-
---hoping tha this shit works and moving onn :(
-local function getRandomLocation(variable)
-    return variable[math.random(1, #variable)]
-end
 
 local function setClothes()
     local ped = PlayerPedId()
@@ -78,14 +69,28 @@ local function createDeathMatchZone(map)
         maxZ = selectedMap.zone.maxZ,
         debugPoly = true
     })
+
     deathMatchZone:onPlayerInOut(function(isPointInsideDmz)
-        if isPointInsideDmz then
-            insideDmz = true
-            --logic
-        else
-            insideDmz = false
+    if insideDmz == nil then
+        insideDmz = isPointInsideDmz
+        if isPointInsideDmz and inDMatch then
+            SendNUIMessage({ action = 'zone:clear' })
+        elseif ~isPointInsideDmz and inDMatch then
+            SendNUIMessage({ action = 'zone:out', time=Config.DMZoneoutKillTime })
         end
-    end)
+        return
+    end
+
+    if insideDmz ~= isPointInsideDmz then
+        insideDmz = isPointInsideDmz
+
+        if isPointInsideDmz and inDMatch then
+            SendNUIMessage({ action = 'zone:clear' })
+        elseif isPointInsideDmz~=true and inDMatch then
+            SendNUIMessage({ action = 'zone:out', time=Config.DMZoneoutKillTime })
+        end
+    end
+end)
 end
 
 local function setPedProperties(clipReload, lastWeapon)
@@ -105,13 +110,32 @@ local function setPedProperties(clipReload, lastWeapon)
     SetEntityHealth(ped, 200)
 end
 
+local function setPedPropertiesTdm(clipReload, lastWeapon)
+    local ped = PlayerPedId()
+    local weapons = Config.DM_Weapons
+    for i = 1, #weapons do
+        GiveWeaponToPed(ped, weapons[i], 200, false, false)
+        if (clipReload) then
+            SetAmmoInClip(ped, weapons[i], 30)
+        end
+        if lastWeapon and weapons[i] == lastWeapon then
+            GiveWeaponToPed(ped, lastWeapon, 200, false, true)
+        end
+    end
+    TriggerServerEvent('hud:server:RelieveStress', 100)
+    SetPedArmour(ped, 100)
+    SetEntityHealth(ped, 200)
+end
+
 local function spawnToRandomPosDm(map, lastWeapon)
+    print(map)
     ped = PlayerPedId()
     local selectedMap = Config.DM_maps[map]
     local spawnPoints = selectedMap.spawnpoints
     local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
     local heading = GetEntityHeading(ped)
     NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z + 0.5, heading, true, false)
+    TriggerEvent("hospital:client:Revive")
     setPedProperties(true, lastWeapon)
     SetEntityCoords(ped, spawnPoint, false, false, false, false)
     SetEntityInvincible(ped, true)
@@ -219,41 +243,6 @@ local function updateHealthStats(hp, armor, ammo, clip)
     })
 end
 
-local function createZones(mapName)
-    local selectedMap = Config.maps[mapName]
-
-    blueZone = PolyZone:Create(selectedMap.blueZone.zones, {
-        name = selectedMap.blueZone.name,
-        minZ = selectedMap.blueZone.minZ,
-        maxZ = selectedMap.blueZone.maxZ,
-        debugPoly = true
-    })
-    blueZone:onPlayerInOut(function(isPointInsideBlue)
-        if isPointInsideBlue then
-            insideBlue = true
-            --logic
-        else
-            insideBlue = false
-            --logic
-        end
-    end)
-    redZone = PolyZone:Create(selectedMap.redZone.zones, {
-        name = selectedMap.redZone.name,
-        minZ = selectedMap.redZone.minZ,
-        maxZ = selectedMap.redZone.maxZ,
-        debugPoly = true
-    })
-    redZone:onPlayerInOut(function(isPointInsideBlue)
-        if isPointInsideBlue then
-            insideRed = true
-            --logic
-        else
-            insideRed = false
-            --logic
-        end
-    end)
-end
-
 local function showJoinUi(map,mapTable)
     SendNUIMessage({
         type = "show-tdm-join",
@@ -321,27 +310,29 @@ local function GetRandomPointInZone(zoneData)
 end
 
 local function sendToTeamSpawn()
+    TriggerEvent("hospital:client:Revive")
+    local ped = PlayerPedId()
     if TdmTeam == "blue" then
         local spawn = GetRandomPointInZone(TdmMap.blueZone)
         FreezeEntityPosition(ped, true)
         RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
+        SetEntityCoordsNoOffset(ped, spawn.x, spawn.y, spawn.z, false, false, false)
         while not HasCollisionLoadedAroundEntity(ped) do
             RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
             Wait(0)
         end
-        SetEntityCoordsNoOffset(ped,spawn.x, spawn.y, spawn.z, false, false, false)
-        FreezeEntityPosition(ped, true)
-
-        SetEntityCoords(PlayerPedId(), spawn.x, spawn.y, spawn.z)
+        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0,1000, true)
+        FreezeEntityPosition(ped, false)
     elseif TdmTeam == "red" then
         local spawn = GetRandomPointInZone(TdmMap.redZone)
         FreezeEntityPosition(ped, true)
         RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
+        SetEntityCoordsNoOffset(ped, spawn.x, spawn.y, spawn.z, false, false, false)
         while not HasCollisionLoadedAroundEntity(ped) do
             RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
             Wait(0)
         end
-        SetEntityCoordsNoOffset(ped,spawn.x, spawn.y, spawn.z, false, false, false)
+        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0,1000, true)
         FreezeEntityPosition(ped, false)
     end
 end
@@ -368,25 +359,6 @@ local function StopHealing()
     HealThread = nil
     SetEntityInvincible(PlayerPedId(), false)
 end
-
-local function ShowWarning(text, time)
-    BeginTextCommandPrint("STRING")
-    AddTextComponentSubstringPlayerName(text)
-    EndTextCommandPrint(time or 2000, true)
-end
-
-local function EnemySpawnKill()
-    InEnemySpawn = true
-
-    ShowWarning("~r~WARNING: Enemy Spawn!", 2000)
-    Wait(2000)
-
-    if InEnemySpawn then
-        SetEntityHealth(PlayerPedId(), 102)
-        sendToTeamSpawn()
-    end
-end
-
 
 RegisterNetEvent("i-tdm:client:startTDM", function(data)
     local mapName = data.map
@@ -418,26 +390,35 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
         toggleHud(true, timeLeft,true)
         inTDM = true
         InMatch = true
+        -- todo: change to tdm cloths
         setClothes()
-        setPedProperties(false, nil)
+        setPedPropertiesTdm(false, nil)
         Wait(2000)
         SetEntityInvincible(ped, false)
         sendToTeamSpawn()
     end, mapName, matchId,true)
-   
+
+    local wasInsideOuter = nil
 
     Zones.outer:onPlayerInOut(function(isInside)
-        if not isInside then
-        DoScreenFadeOut(600)
-            while not IsScreenFadedOut() do
-                Wait(0)
-        end
-    sendToTeamSpawn()
-    Wait(200)
+    if inTDM~=true then return end
+    if wasInsideOuter == nil then
+        wasInsideOuter = isInside
+        SendNUIMessage({ action = isInside and 'zone:clear' or 'zone:out', time=Config.TDMZoneOutKillTime })
+        return
+    end
 
-    DoScreenFadeIn(300)
+    if wasInsideOuter ~= isInside then
+        wasInsideOuter = isInside
+
+        if isInside then
+            SendNUIMessage({ action = 'zone:clear' })
+        else
+            SendNUIMessage({ action = 'zone:out',time=Config.TDMZoneOutKillTime })
         end
-    end)
+    end
+end)
+
 
     local ownZone = TdmTeam == "red" and Zones.red or Zones.blue
     ownZone:onPlayerInOut(function(isInside)
@@ -453,13 +434,12 @@ end)
     enemyZone:onPlayerInOut(function(isInside)
     InEnemySpawn = isInside
     if isInside then
-        EnemySpawnKill()
+        SendNUIMessage({ action = 'zone:enemy',time=Config.TDMEnemyZoneKillTime })
+    else
+        SendNUIMessage({ action = 'zone:clear' })
     end
 end)
 end)
-
-
-
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     RemoveBlip(startBlip)
@@ -475,6 +455,7 @@ RegisterNetEvent('i-tdm:client:open-menu', function()
 end)
 
 RegisterNetEvent('i-tdm:client:stop-dm', function()
+    print('stopping')
     if inTDM then 
         inTDM = false
         InMatch = false
@@ -488,7 +469,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         RemoveAllPedWeapons(ped)
         Wait(2000)
         SwitchInPlayer(PlayerPedId())
-        NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
+        NetworkResurrectLocalPlayer(Config.startPed.pos,1000, true)
         TriggerEvent("hospital:client:Revive")
         TriggerEvent(Config.reloadSkinEvent)
         TriggerServerEvent('i-tdm:server:remove-participant-tdm', currTDmap, activeMatchId)
@@ -513,9 +494,9 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         DMKills = 0
         currBucket = nil
         SetEntityCoordsNoOffset(ped, Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z, false, false, false)
-        RequestCollisionAtCoord(x, y, z)
+        RequestCollisionAtCoord(Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z)
         while not HasCollisionLoadedAroundEntity(ped) do
-            RequestCollisionAtCoord(x, y, z)
+            RequestCollisionAtCoord(Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z)
             Wait(0)
         end
         -- SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
@@ -663,6 +644,34 @@ RegisterNUICallback('kick-tdm-player', function(data, cb)
     TriggerServerEvent('i-tdm:server:kick-tdm-player',data)
 end)
 
+RegisterNUICallback('zoneDeath', function(data, cb)
+    if data.reason == 'out-of-zone' then
+        -- kill player
+        SetEntityHealth(PlayerPedId(), 101)
+        SetPedCanRagdoll(ped, true)
+        SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+        Wait(1000)
+        if inDMatch then
+            print('indm spawn send')
+            local _, lastWeapon = GetCurrentPedWeapon(ped)
+            spawnToRandomPosDm(currDmap, lastWeapon)
+        else
+            sendToTeamSpawn()
+        end
+        DMDeaths = DMDeaths + 1
+    elseif data.reason == 'enemy-zone' then
+        SetEntityHealth(PlayerPedId(), 101)
+        SetEntityHealth(PlayerPedId(), 101)
+        SetPedCanRagdoll(ped, true)
+        SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+        DMDeaths = DMDeaths + 1
+        sendToTeamSpawn()
+    end
+
+    cb('ok')
+end)
+
+
 
 CreateThread(function()
     RequestModel(GetHashKey(Config.startPed.model))
@@ -767,7 +776,6 @@ AddEventHandler('gameEventTriggered', function(event, data)
 
             if inTDM then
                 DMDeaths = DMDeaths + 1
-                print(DMDeaths)
 
                 SetPedCanRagdoll(ped, true)
                 SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
@@ -797,7 +805,7 @@ AddEventHandler('gameEventTriggered', function(event, data)
 
                 ClearPedBloodDamage(ped)
                 ResetPedMovementClipset(ped, 0.0)
-                setPedProperties(true, lastWeapon)
+                setPedPropertiesTdm(true, lastWeapon)
 
                 dmRespawning = false
                 end)

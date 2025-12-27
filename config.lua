@@ -69,6 +69,10 @@ Config.DM_Weapons = { --first weapon will be forced in hand
     0x1D073A89,       --pump shotgun
 }
 
+Config.TDMZoneOutKillTime = 5 --seconds
+Config.TDMEnemyZoneKillTime = 5 --seconds
+Config.DMZoneoutKillTime = 5 --seconds
+
 Config.TDM_maps = {
     ['map1'] = {
         name = 'map1',

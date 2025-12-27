@@ -13,7 +13,7 @@ const props = defineProps({
 //   payload: { "map": "map1", "matchId": 1, "playerId": 1, "mapTable": { "time": 5, "maxMembers": 10, "id": 1, "blueTeam": { "AIE74953": { "name": "insane blue", "source": 2 } }, "weapon": "assault", "bucketId": 2, "creatorId": 1, "redTeam": { "AIE73953": { "name": "insane gwak", "source": 1 } }, "started": false, "creator": "InsanE", "password": "" } }
 // }
 
-const emit = defineEmits(['change', 'close'])
+const emit = defineEmits(['change', 'close','notify'])
 
 const map = ref(null)
 const matchId = ref(null)
@@ -113,6 +113,15 @@ function updateMemberCount(value) {
 
 function startMatch() {
   if (!isOwner.value) return
+  if(!Object.keys(match.value?.blueTeam || {}).length && !Object.keys(match.value?.redTeam || {}).length){
+    emit('notify', 'No members joined in any team!')
+    return
+  }
+
+  if((Object.keys(match.value?.blueTeam || {}).length + Object.keys(match.value?.redTeam || {}).length) > match.value?.maxMembers){
+    emit('notify', 'Joined players exceeds max members')
+    return
+  }
 
   fetch(`https://${getResourceName()}/start-tdm`, {
     method: 'POST',

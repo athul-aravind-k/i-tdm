@@ -13,6 +13,7 @@ import ActiveTdms from './screens/ActiveTdms.vue'
 import Hud from './components/Hud.vue'
 import Toasts from './components/Toasts.vue'
 import Leaderboard from './screens/Leaderboard.vue'
+import ZoneWarning from './screens/ZoneWarning.vue'
 
 const uiVisible = ref(false)
 const screen = ref('main')
@@ -129,4 +130,5 @@ const currentComponent = computed(() => {
   <!-- GLOBAL OVERLAYS -->
   <Toasts />
   <Hud />
+  <ZoneWarning/>
 </template>
