@@ -31,7 +31,8 @@ function handleJoin(match) {
   if (match.password && match.password?.length > 0) {
     selectedMatch.value = match
   } else {
-    onJoinMatch(match.matchId, match.map)
+    console.log(JSON.stringify(match))
+    onJoinMatch(match.matchId, match.map,null,null,match.bucketId)
   }
 }
 
@@ -41,7 +42,7 @@ function handlePasswordSubmit() {
   }
 }
 
-function onJoinMatch(matchId,map,matchPass,pass) {
+function onJoinMatch(matchId,map,matchPass,pass,bucketId) {
   if(props.payload.mode==='tdm'){
     if(pass?.length>0){
       if(pass===matchPass){
@@ -54,13 +55,16 @@ function onJoinMatch(matchId,map,matchPass,pass) {
       joinTDM(matchId,map)
     }
   }else{
-    fetch(`https://${getResourceName()}/startDeathMatch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selectedMap: map
-      })
+    console.log('joining bucket', bucketId)
+    fetch(`https://i-tdm/join-dm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      map: map,
+      matchId: matchId,
+      bucketId: bucketId
     })
+  })
 
     emit('close')
   }

@@ -18,6 +18,7 @@ local TdmMap = nil
 local HealThread = nil
 local InOwnSpawn = false
 local InEnemySpawn = false
+local TDMMatchData = {}
 
 local function setClothes()
     local ped = PlayerPedId()
@@ -155,7 +156,32 @@ local function toggleHud(bool, time,isTdm)
     })
 end
 
+local function notify(message,type)
+    SendNUIMessage({
+        type = 'notify',
+        action = type,
+        message = message,
+    })
+end
+
+local function GetPlayerTeamByServerId(id)
+    local Player = QBCore.Functions.GetPlayerData(id)
+    print(Player.citizenid)
+    if not Player then return nil end
+    local citizenid = Player.PlayerData.citizenid
+    if TDMMatchData.blueTeam and TDMMatchData.blueTeam[citizenid] then
+        return "blue"
+    end
+
+    if TDMMatchData.redTeam and TDMMatchData.redTeam[citizenid] then
+        return "red"
+    end
+
+    return nil
+end
+
 local function sendToDmatchMap(map, matchId, bucketId)
+    print('bucket',bucketId)
     local mId = tonumber(matchId)
     local bId = tonumber(bucketId)
     QBCore.Functions.TriggerCallback('i-tdm:check-match-validity', function(active, joinable)
@@ -199,10 +225,10 @@ local function sendToDmatchMap(map, matchId, bucketId)
                     InMatch = true
                 end, map, mId,false)
             else
-                QBCore.Functions.Notify('match Full', 'error', 2000)
+                notify('match Full', 'error')
             end
         else
-            QBCore.Functions.Notify('match doesnt exist', 'error', 2000)
+            notify('match doesnt exist', 'error')
         end
     end, map, matchId)
 end
@@ -368,6 +394,7 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     local bId = data.bucketId
     local ped = PlayerPedId()
     activeMatchId = matchId
+    TDMMatchData = data.match
     
     if not TdmMap then return end
     for _, z in pairs(Zones) do
@@ -514,7 +541,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         currDmap = nil
         activeMatchId = nil
     else
-        QBCore.Functions.Notify('you are not in a match', 'error', 2000)
+        notify('you are not in a match', 'error')
     end
 end)
 
@@ -545,13 +572,22 @@ SendNUIMessage({
     })
 end)
 
+RegisterNetEvent('i-tdm:client:update-hud-stats', function(kills, deaths, heal)
+    DMKills = kills
+    DMDeaths = deaths
+    if heal then
+        SetEntityHealth(PlayerPedId(),200)
+        SetPedArmour(ped, 100)
+    end
+end)
+
 RegisterNetEvent('i-tdm:client:kick-player-tdm', function()
     SendNUIMessage({
         type = "close-ui",
         message = {}
     })
     SetNuiFocus(false, false)
-    QBCore.Functions.Notify('You have been kicked from the match', 'error', 2000)
+    notify('You have been kicked from the match', 'error')
 
 end)
 
@@ -654,19 +690,15 @@ RegisterNUICallback('zoneDeath', function(data, cb)
         SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
         Wait(1000)
         if inDMatch then
-            print('indm spawn send')
             local _, lastWeapon = GetCurrentPedWeapon(ped)
             spawnToRandomPosDm(currDmap, lastWeapon)
         else
             sendToTeamSpawn()
         end
-        DMDeaths = DMDeaths + 1
     elseif data.reason == 'enemy-zone' then
-        SetEntityHealth(PlayerPedId(), 101)
         SetEntityHealth(PlayerPedId(), 101)
         SetPedCanRagdoll(ped, true)
         SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
-        DMDeaths = DMDeaths + 1
         sendToTeamSpawn()
     end
 
@@ -731,9 +763,6 @@ AddEventHandler('gameEventTriggered', function(event, data)
     local ped = PlayerPedId()
     local health = GetEntityHealth(ped)
 
-    local ped = PlayerPedId()
-    local health = GetEntityHealth(ped)
-
     if health <= 103 then
         if dmRespawning then return end
             CancelEvent()
@@ -741,7 +770,7 @@ AddEventHandler('gameEventTriggered', function(event, data)
 
             dmRespawning = true
             if inDMatch then
-                DMDeaths = DMDeaths + 1
+                -- DMDeaths = DMDeaths + 1
 
                 SetPedCanRagdoll(ped, true)
                 SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
@@ -754,12 +783,11 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 if attackerId and attackerId ~= PlayerId() then
                     TriggerServerEvent(
                         'i-tdm:server:send-kill-msg',
-                        GetPlayerName(attackerId),
-                        GetPlayerName(PlayerId()),
+                        GetPlayerServerId(attackerId),
+                        GetPlayerServerId(PlayerId()),
                         currDmap,
                         activeMatchId
                     )
-                    DMKills = DMKills + 1
                 end
 
                 CreateThread(function()
@@ -777,7 +805,17 @@ AddEventHandler('gameEventTriggered', function(event, data)
             end
 
             if inTDM then
-                DMDeaths = DMDeaths + 1
+
+            local attackerPlayer = NetworkGetPlayerIndexFromPed(attacker)
+            if attackerPlayer ~= -1 then
+                local attackerSid = GetPlayerServerId(attackerPlayer)
+                local victimSid   = GetPlayerServerId(PlayerId())
+
+            if GetPlayerTeamByServerId(attackerSid) == GetPlayerTeamByServerId(victimSid) then
+                CancelEvent()
+                return
+            end
+        end
 
                 SetPedCanRagdoll(ped, true)
                 SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
@@ -790,13 +828,12 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 if attackerId and attackerId ~= PlayerId() then
                     TriggerServerEvent(
                         'i-tdm:server:send-kill-msg-tdm',
-                        GetPlayerName(attackerId),
-                        GetPlayerName(PlayerId()),
+                        GetPlayerServerId(attackerId),
+                        GetPlayerServerId(PlayerId()),
                         TdmMap,
                         activeTDMId,
                         TdmTeam
                     )
-                    DMKills = DMKills + 1
                 end
 
                 CreateThread(function()

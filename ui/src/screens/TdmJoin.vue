@@ -112,6 +112,18 @@ function updateMemberCount(value) {
   })
 }
 
+function updatemaxKillToWin(value) {
+  fetch(`https://${getResourceName()}/tdm-update-settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      map: map.value,
+      matchId: matchId.value,
+      maxKillToWin: Number(value)
+    })
+  })
+}
+
 function startMatch() {
   if (!isOwner.value) return
   if(!Object.keys(match.value?.blueTeam || {}).length && !Object.keys(match.value?.redTeam || {}).length){
@@ -233,7 +245,7 @@ function goBack() {
               <label>
                 Total Time
                 <select :value="match.time" :disabled="!isOwner" @change="updateTime($event.target.value)">
-                  <option v-for="n in [1, 5, 10, 15, 20, 30]" :key="n" :value="n">
+                  <option v-for="n in [ 5, 10, 15, 20, 30]" :key="n" :value="n">
                     {{ n }} Min
                   </option>
                 </select>
@@ -253,6 +265,14 @@ function goBack() {
                 Max Players
                 <select :value="match.maxMembers" @change="updateMemberCount($event.target.value)" :disabled="!isOwner">
                   <option v-for="n in [4, 6, 8, 10, 12]" :key="n" :value="n">
+                    {{ n }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                Kill Target
+                <select :value="match.maxKillToWin" @change="updatemaxKillToWin($event.target.value)" :disabled="!isOwner">
+                  <option v-for="n in [10,20,30,40]" :key="n" :value="n">
                     {{ n }}
                   </option>
                 </select>

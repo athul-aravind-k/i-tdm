@@ -90,6 +90,10 @@ onMounted(() => {
           matches: data.matches
         }
         break
+        case 'notify':
+          console.log(JSON.stringify(data))
+        notificationStore.show(data.action, data.message);
+        break
     }
   })
 
@@ -106,7 +110,7 @@ const currentComponent = computed(() => {
     map: MapSelect,
     tdmJoin: TdmJoin,
     tdmPassword: TdmPassword,
-    activeMatches: ActiveMatches,
+    activeMatches: ActiveTdms,
     activeTdms: ActiveTdms,
     leaderboard: Leaderboard
   }[screen.value]

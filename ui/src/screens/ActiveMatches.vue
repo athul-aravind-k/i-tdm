@@ -16,11 +16,6 @@ const emit = defineEmits(['change'])
 /* =========================
    FiveM-safe helper
 ========================= */
-function getResourceName() {
-  return window.GetParentResourceName
-    ? GetParentResourceName()
-    : 'dev'
-}
 
 /* =========================
    Time formatting
@@ -57,7 +52,7 @@ const matchesWithTime = computed(() => {
 function joinMatch(match) {
   emit('change', 'main')
 
-  fetch(`https://${getResourceName()}/join-dm`, {
+  fetch(`https://i-tdm/join-dm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
