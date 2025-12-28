@@ -31,7 +31,6 @@ function handleJoin(match) {
   if (match.password && match.password?.length > 0) {
     selectedMatch.value = match
   } else {
-    console.log(JSON.stringify(match))
     onJoinMatch(match.matchId, match.map,null,null,match.bucketId)
   }
 }
@@ -55,7 +54,6 @@ function onJoinMatch(matchId,map,matchPass,pass,bucketId) {
       joinTDM(matchId,map)
     }
   }else{
-    console.log('joining bucket', bucketId)
     fetch(`https://i-tdm/join-dm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

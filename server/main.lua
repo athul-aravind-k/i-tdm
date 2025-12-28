@@ -170,6 +170,26 @@ RegisterNetEvent("i-tdm:server:joinTeam", function(data)
     TriggerClientEvent("i-tdm:client:updateLobby", -1, data.map, tonumber(data.matchId), match)
 end)
 
+RegisterNetEvent("i-tdm:server:delete-tdm", function(data)
+    local src = source
+    local match = TDmaps[data.map].activeMatches[tonumber(data.matchId)]
+    if not match then return end
+    if match.creatorId ~= src then print('only owner can delete') return end
+    for _, playerData in pairs(match.redTeam) do
+        if playerData.source then
+            TriggerClientEvent("i-tdm:server:kick-tdm-player", playerData.source)
+        end
+    end
+
+    for _, playerData in pairs(match.blueTeam) do
+        if playerData.source then
+            TriggerClientEvent("i-tdm:server:kick-tdm-player", playerData.source)
+        end
+    end
+
+    TDmaps[data.map].activeMatches[tonumber(data.matchId)] = nil
+end)
+
 RegisterNetEvent("i-tdm:server:start-tdm", function(data)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
@@ -188,7 +208,7 @@ RegisterNetEvent("i-tdm:server:start-tdm", function(data)
     match.endingTime = endingTime
     match.started = true
 
-    for citizenid, playerData in pairs(match.redTeam) do
+    for _, playerData in pairs(match.redTeam) do
         if playerData.source then
             TriggerClientEvent(
                 "i-tdm:client:startTDM",
@@ -266,7 +286,7 @@ RegisterNetEvent("i-tdm:server:kick-tdm-player", function(data)
     match.blueTeam[citizenid] = nil
 
     TriggerClientEvent("i-tdm:client:kick-player-tdm", data.playerId)
-    TriggerClientEvent("i-tdm:client:updateLobby", -1, map, matchId, match)
+    TriggerClientEvent("i-tdm:client:updateLobby", -1, data.map, data.matchId, match)
 end)
 
 
@@ -335,6 +355,7 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches', function(source, cb)
                     creator = val.creator,
                     mapLabel = v.label,
                     maxMembers = v.maxMembers,
+                    image = v.image,
                     playerStats = {}
                     
                 }

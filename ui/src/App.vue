@@ -7,7 +7,6 @@ import JoinMenu from './screens/JoinMenu.vue'
 import MapSelect from './screens/MapSelect.vue'
 import TdmJoin from './screens/TdmJoin.vue'
 import TdmPassword from './screens/TdmPassword.vue'
-import ActiveMatches from './screens/ActiveMatches.vue'
 import ActiveTdms from './screens/ActiveTdms.vue'
 
 import Hud from './components/Hud.vue'
@@ -91,7 +90,6 @@ onMounted(() => {
         }
         break
         case 'notify':
-          console.log(JSON.stringify(data))
         notificationStore.show(data.action, data.message);
         break
     }

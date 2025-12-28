@@ -295,7 +295,7 @@ local function joinTeamDeathMatch(matchId,map)
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
     QBCore.Functions.TriggerCallback('i-tdm:server:get-tdm-details', function(mapTable)
         activeTDMId = matchId
-        showJoinUi(map,matchId,mapTable)
+        showJoinUi(map,mapTable)
     end, matchId,map)
 end
 
@@ -415,6 +415,10 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
         print(timeLeft)
         toggleHud(true, timeLeft,true)
+        SendNUIMessage({
+        type = "close-ui",
+        message = {}
+        })
         inTDM = true
         InMatch = true
         -- todo: change to tdm cloths
@@ -680,6 +684,12 @@ end)
 
 RegisterNUICallback('kick-tdm-player', function(data, cb)
     TriggerServerEvent('i-tdm:server:kick-tdm-player',data)
+    cb("ok")
+end)
+
+RegisterNUICallback('delete-tdm', function(data, cb)
+    TriggerServerEvent('i-tdm:server:delete-tdm',data)
+    cb("ok")
 end)
 
 RegisterNUICallback('zoneDeath', function(data, cb)

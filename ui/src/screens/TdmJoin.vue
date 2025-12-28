@@ -150,6 +150,17 @@ function startMatch() {
 }
 
 function goBack() {
+  if(isOwner){
+    fetch(`https://${getResourceName()}/delete-tdm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      map: map.value,
+      matchId: matchId.value,
+    })
+  })
+  emit('close')
+  }
   emit('change', 'main')
 }
 
