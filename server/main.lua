@@ -135,6 +135,25 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
         return
     end
 
+    if match.redKills == match.maxKillToWin or match.blueKills == match.maxKillToWin then
+        if match.redTeam then
+            for _, playerData in pairs(match.redTeam) do
+                if playerData and playerData.source then
+                    TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
+                end
+            end
+        end
+        if match.blueTeam then
+            for _, playerData in pairs(match.blueTeam) do
+                if playerData and playerData.source then
+                    -- show match results and then stop dm
+                    TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
+                end
+            end
+        end
+        
+    end
+
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
         killerId,
@@ -477,14 +496,14 @@ CreateThread(function()
                     local curTime = os.time()
                     if match.endingTime <= curTime then
                         if match.redTeam then
-                            for citizenid, playerData in pairs(match.redTeam) do
+                            for _, playerData in pairs(match.redTeam) do
                                 if playerData and playerData.source then
                                     TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
                                 end
                             end
                         end
                         if match.blueTeam then
-                            for citizenid, playerData in pairs(match.blueTeam) do
+                            for _, playerData in pairs(match.blueTeam) do
                                 if playerData and playerData.source then
                                     -- show match results and then stop dm
                                     TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
