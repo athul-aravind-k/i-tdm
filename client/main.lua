@@ -72,26 +72,26 @@ local function createDeathMatchZone(map)
     })
 
     deathMatchZone:onPlayerInOut(function(isPointInsideDmz)
-    if insideDmz == nil then
-        insideDmz = isPointInsideDmz
-        if isPointInsideDmz and inDMatch then
-            SendNUIMessage({ action = 'zone:clear' })
-        elseif ~isPointInsideDmz and inDMatch then
-            SendNUIMessage({ action = 'zone:out', time=Config.DMZoneoutKillTime })
+        if insideDmz == nil then
+            insideDmz = isPointInsideDmz
+            if isPointInsideDmz and inDMatch then
+                SendNUIMessage({ action = 'zone:clear' })
+            elseif ~isPointInsideDmz and inDMatch then
+                SendNUIMessage({ action = 'zone:out', time = Config.DMZoneoutKillTime })
+            end
+            return
         end
-        return
-    end
 
-    if insideDmz ~= isPointInsideDmz then
-        insideDmz = isPointInsideDmz
+        if insideDmz ~= isPointInsideDmz then
+            insideDmz = isPointInsideDmz
 
-        if isPointInsideDmz and inDMatch then
-            SendNUIMessage({ action = 'zone:clear' })
-        elseif isPointInsideDmz~=true and inDMatch then
-            SendNUIMessage({ action = 'zone:out', time=Config.DMZoneoutKillTime })
+            if isPointInsideDmz and inDMatch then
+                SendNUIMessage({ action = 'zone:clear' })
+            elseif isPointInsideDmz ~= true and inDMatch then
+                SendNUIMessage({ action = 'zone:out', time = Config.DMZoneoutKillTime })
+            end
         end
-    end
-end)
+    end)
 end
 
 local function setPedProperties(clipReload, lastWeapon)
@@ -129,7 +129,6 @@ local function setPedPropertiesTdm(clipReload, lastWeapon)
 end
 
 local function spawnToRandomPosDm(map, lastWeapon)
-    print(map)
     ped = PlayerPedId()
     local selectedMap = Config.DM_maps[map]
     local spawnPoints = selectedMap.spawnpoints
@@ -144,7 +143,7 @@ local function spawnToRandomPosDm(map, lastWeapon)
     SetEntityInvincible(ped, false)
 end
 
-local function toggleHud(bool, time,isTdm)
+local function toggleHud(bool, time, isTdm)
     SendNUIMessage({
         type = 'toggle-hud',
         message = {
@@ -156,7 +155,7 @@ local function toggleHud(bool, time,isTdm)
     })
 end
 
-local function notify(message,type)
+local function notify(message, type)
     SendNUIMessage({
         type = 'notify',
         action = type,
@@ -164,24 +163,14 @@ local function notify(message,type)
     })
 end
 
-local function GetPlayerTeamByServerId(id)
-    local Player = QBCore.Functions.GetPlayerData(id)
-    print(Player.citizenid)
-    if not Player then return nil end
-    local citizenid = Player.PlayerData.citizenid
-    if TDMMatchData.blueTeam and TDMMatchData.blueTeam[citizenid] then
-        return "blue"
-    end
+-- local function GetPlayerTeamByServerId(id)
+--     QBCore.Functions.TriggerCallback('i-tdm:get-player-team', function(timeLeft)
 
-    if TDMMatchData.redTeam and TDMMatchData.redTeam[citizenid] then
-        return "red"
-    end
+--     end, id)
+-- end
 
-    return nil
-end
 
 local function sendToDmatchMap(map, matchId, bucketId)
-    print('bucket',bucketId)
     local mId = tonumber(matchId)
     local bId = tonumber(bucketId)
     QBCore.Functions.TriggerCallback('i-tdm:check-match-validity', function(active, joinable)
@@ -204,7 +193,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
                     Wait(2000)
                     SetEntityInvincible(ped, true)
                     SetEntityCoordsNoOffset(ped, spawnPoint.x, spawnPoint.y, spawnPoint.z, false, false, false, true)
-                    
+
                     while not HasCollisionLoadedAroundEntity(ped) do
                         RequestCollisionAtCoord(spawnPoint.x, spawnPoint.y, spawnPoint.z)
                         Wait(0)
@@ -215,7 +204,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
                     ClearPedTasksImmediately(ped)
                     Wait(2000)
                     SwitchInPlayer(ped)
-                    toggleHud(true, timeLeft,false)
+                    toggleHud(true, timeLeft, false)
                     setClothes()
                     setPedProperties(false, nil)
                     Wait(2000)
@@ -223,7 +212,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
                     SetEntityInvincible(ped, false)
                     inDMatch = true
                     InMatch = true
-                end, map, mId,false)
+                end, map, mId, false)
             else
                 notify('match Full', 'error')
             end
@@ -269,7 +258,7 @@ local function updateHealthStats(hp, armor, ammo, clip)
     })
 end
 
-local function showJoinUi(map,mapTable)
+local function showJoinUi(map, mapTable)
     SendNUIMessage({
         type = "show-tdm-join",
         matchId = activeTDMId,
@@ -279,28 +268,28 @@ local function showJoinUi(map,mapTable)
     })
 end
 
-local function startTeamDeathMatch(map,password)
+local function startTeamDeathMatch(map, password)
     currTDmap = map
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
     QBCore.Functions.TriggerCallback('i-tdm:get-new-bucketId', function(bucketId)
-        QBCore.Functions.TriggerCallback('i-tdm:server:createTDMatch', function(matchId,mapTable)
+        QBCore.Functions.TriggerCallback('i-tdm:server:createTDMatch', function(matchId, mapTable)
             activeTDMId = matchId
-            showJoinUi(map,mapTable)
-        end, map, bucketId,password)
+            showJoinUi(map, mapTable)
+        end, map, bucketId, password)
     end)
 end
 
-local function joinTeamDeathMatch(matchId,map)
+local function joinTeamDeathMatch(matchId, map)
     currTDmap = map
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
     QBCore.Functions.TriggerCallback('i-tdm:server:get-tdm-details', function(mapTable)
         activeTDMId = matchId
-        showJoinUi(map,mapTable)
-    end, matchId,map)
+        showJoinUi(map, mapTable)
+    end, matchId, map)
 end
 
 RegisterNetEvent("i-tdm:client:updateLobby", function(map, matchId, matchData)
-  showJoinUi(map, matchData);
+    showJoinUi(map, matchData);
 end);
 
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
@@ -315,10 +304,10 @@ local function DrawPolyZone(zoneData, color)
         maxZ = zoneData.maxZ,
         debugPoly = true,
         debugColors = {
-        walls = color,
-        outline = {0, 0, 255},
-        grid = {0, 0, 255}
-    }
+            walls = color,
+            outline = { 0, 0, 255 },
+            grid = { 0, 0, 255 }
+        }
     })
     return zone
 end
@@ -347,7 +336,7 @@ local function sendToTeamSpawn()
             RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
             Wait(0)
         end
-        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0,1000, true)
+        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0, 1000, true)
         FreezeEntityPosition(ped, false)
     elseif TdmTeam == "red" then
         local spawn = GetRandomPointInZone(TdmMap.redZone)
@@ -358,7 +347,7 @@ local function sendToTeamSpawn()
             RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
             Wait(0)
         end
-        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0,1000, true)
+        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0, 1000, true)
         FreezeEntityPosition(ped, false)
     end
 end
@@ -395,15 +384,15 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     local ped = PlayerPedId()
     activeMatchId = matchId
     TDMMatchData = data.match
-    
+
     if not TdmMap then return end
     for _, z in pairs(Zones) do
         z:destroy()
     end
-    
+
     Zones = {}
-    Zones.blue = DrawPolyZone(TdmMap.blueZone, { 0,100,255 })
-    Zones.red = DrawPolyZone(TdmMap.redZone, { 255,50,50 })
+    Zones.blue = DrawPolyZone(TdmMap.blueZone, { 0, 100, 255 })
+    Zones.red = DrawPolyZone(TdmMap.redZone, { 255, 50, 50 })
     Zones.outer = DrawPolyZone(TdmMap.outerZone, { 255, 255, 255 })
     TriggerServerEvent('i-tdm:server:set-bucket', bId)
     SwitchOutPlayer(ped, 0, 1)
@@ -413,11 +402,10 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     Wait(2000)
     SwitchInPlayer(ped)
     QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
-        print(timeLeft)
-        toggleHud(true, timeLeft,true)
+        toggleHud(true, timeLeft, true)
         SendNUIMessage({
-        type = "close-ui",
-        message = {}
+            type = "close-ui",
+            message = {}
         })
         inTDM = true
         InMatch = true
@@ -429,49 +417,49 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
         sendToTeamSpawn()
         SetPedArmour(ped, 100)
         SetEntityHealth(ped, 200)
-    end, mapName, matchId,true)
+    end, mapName, matchId, true)
 
     local wasInsideOuter = nil
 
     Zones.outer:onPlayerInOut(function(isInside)
-    if inTDM~=true then return end
-    if wasInsideOuter == nil then
-        wasInsideOuter = isInside
-        SendNUIMessage({ action = isInside and 'zone:clear' or 'zone:out', time=Config.TDMZoneOutKillTime })
-        return
-    end
-
-    if wasInsideOuter ~= isInside then
-        wasInsideOuter = isInside
-
-        if isInside then
-            SendNUIMessage({ action = 'zone:clear' })
-        else
-            SendNUIMessage({ action = 'zone:out',time=Config.TDMZoneOutKillTime })
+        if inTDM ~= true then return end
+        if wasInsideOuter == nil then
+            wasInsideOuter = isInside
+            SendNUIMessage({ action = isInside and 'zone:clear' or 'zone:out', time = Config.TDMZoneOutKillTime })
+            return
         end
-    end
-end)
+
+        if wasInsideOuter ~= isInside then
+            wasInsideOuter = isInside
+
+            if isInside then
+                SendNUIMessage({ action = 'zone:clear' })
+            else
+                SendNUIMessage({ action = 'zone:out', time = Config.TDMZoneOutKillTime })
+            end
+        end
+    end)
 
 
     local ownZone = TdmTeam == "red" and Zones.red or Zones.blue
     ownZone:onPlayerInOut(function(isInside)
         InOwnSpawn = isInside
-    if isInside then
-        StartHealing()
-    else
-        StopHealing()
-    end
-end)
+        if isInside then
+            StartHealing()
+        else
+            StopHealing()
+        end
+    end)
 
     local enemyZone = TdmTeam == "red" and Zones.blue or Zones.red
     enemyZone:onPlayerInOut(function(isInside)
-    InEnemySpawn = isInside
-    if isInside then
-        SendNUIMessage({ action = 'zone:enemy',time=Config.TDMEnemyZoneKillTime })
-    else
-        SendNUIMessage({ action = 'zone:clear' })
-    end
-end)
+        InEnemySpawn = isInside
+        if isInside then
+            SendNUIMessage({ action = 'zone:enemy', time = Config.TDMEnemyZoneKillTime })
+        else
+            SendNUIMessage({ action = 'zone:clear' })
+        end
+    end)
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
@@ -488,12 +476,11 @@ RegisterNetEvent('i-tdm:client:open-menu', function()
 end)
 
 RegisterNetEvent('i-tdm:client:stop-dm', function()
-    print('stopping')
-    if inTDM then 
+    if inTDM then
         inTDM = false
         InMatch = false
         local ped = PlayerPedId()
-        toggleHud(false, 0,false)
+        toggleHud(false, 0, false)
         SwitchOutPlayer(ped, 0, 1)
         Wait(2000)
         TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
@@ -502,7 +489,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         RemoveAllPedWeapons(ped)
         Wait(2000)
         SwitchInPlayer(PlayerPedId())
-        NetworkResurrectLocalPlayer(Config.startPed.pos,1000, true)
+        NetworkResurrectLocalPlayer(Config.startPed.pos, 1000, true)
         TriggerEvent("hospital:client:Revive")
         TriggerEvent(Config.reloadSkinEvent)
         TriggerServerEvent('i-tdm:server:remove-participant-tdm', currTDmap, activeMatchId)
@@ -513,20 +500,21 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         HealThread = nil
         activeMatchId = nil
         for _, z in pairs(Zones) do
-        z:destroy()
+            z:destroy()
         end
     elseif inDMatch then
         inDMatch = false
         InMatch = false
         local ped = PlayerPedId()
-        toggleHud(false, 0,false)
+        toggleHud(false, 0, false)
         SwitchOutPlayer(ped, 0, 1)
         Wait(2000)
         TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
         DMDeaths = 0
         DMKills = 0
         currBucket = nil
-        SetEntityCoordsNoOffset(ped, Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z, false, false, false)
+        SetEntityCoordsNoOffset(ped, Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z, false, false,
+            false)
         RequestCollisionAtCoord(Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z)
         while not HasCollisionLoadedAroundEntity(ped) do
             RequestCollisionAtCoord(Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z)
@@ -564,7 +552,7 @@ RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
 end)
 
 RegisterNetEvent('i-tdm:client:show-kill-msg-tdm', function(killerName, victimName, typeX, redKills, blueKills)
-SendNUIMessage({
+    SendNUIMessage({
         type = "kill-msg-tdm",
         message = {
             killer = killerName,
@@ -580,7 +568,7 @@ RegisterNetEvent('i-tdm:client:update-hud-stats', function(kills, deaths, heal)
     DMKills = kills
     DMDeaths = deaths
     if heal then
-        SetEntityHealth(PlayerPedId(),200)
+        SetEntityHealth(PlayerPedId(), 200)
         SetPedArmour(ped, 100)
     end
 end)
@@ -592,7 +580,6 @@ RegisterNetEvent('i-tdm:client:kick-player-tdm', function()
     })
     SetNuiFocus(false, false)
     notify('You have been kicked from the match', 'error')
-
 end)
 
 AddEventHandler('onResourceStart', function(resource)
@@ -654,41 +641,41 @@ RegisterNUICallback('join-dm', function(data, cb)
 end)
 
 RegisterNUICallback('join-tdm', function(data, cb)
-    TriggerServerEvent('i-tdm:server:joinTeam',data)
+    TriggerServerEvent('i-tdm:server:joinTeam', data)
     cb("ok")
 end)
 
 RegisterNUICallback("createTDM", function(data, cb)
     local password = data.password
     local map = data.map
-    startTeamDeathMatch(map,password)
+    startTeamDeathMatch(map, password)
     cb("ok")
 end)
 
 RegisterNUICallback("join-tdm-lobby", function(data, cb)
     local matchId = data.matchId
     local map = data.map
-    joinTeamDeathMatch(matchId,map)
+    joinTeamDeathMatch(matchId, map)
     cb("ok")
 end)
 
 RegisterNUICallback("tdm-update-settings", function(data, cb)
-    TriggerServerEvent('i-tdm:server:update-settings',data)
+    TriggerServerEvent('i-tdm:server:update-settings', data)
     cb("ok")
 end)
 
 RegisterNUICallback('start-tdm', function(data, cb)
-    TriggerServerEvent('i-tdm:server:start-tdm',data)
+    TriggerServerEvent('i-tdm:server:start-tdm', data)
     cb("ok")
 end)
 
 RegisterNUICallback('kick-tdm-player', function(data, cb)
-    TriggerServerEvent('i-tdm:server:kick-tdm-player',data)
+    TriggerServerEvent('i-tdm:server:kick-tdm-player', data)
     cb("ok")
 end)
 
 RegisterNUICallback('delete-tdm', function(data, cb)
-    TriggerServerEvent('i-tdm:server:delete-tdm',data)
+    TriggerServerEvent('i-tdm:server:delete-tdm', data)
     cb("ok")
 end)
 
@@ -728,22 +715,21 @@ CreateThread(function()
     FreezeEntityPosition(starterPed, true)
 
     exports.ox_target:addBoxZone({
-    name = 'i-tdm-start',
-    coords = Config.startPed.targetZone, -- vector3
-    size = vec3(1, 1, Config.startPed.maxZ - Config.startPed.minZ),
-    rotation = Config.startPed.targetHeading,
-    debug = false,
-    options = {
-        {
-            type = 'client',
-            event = 'i-tdm:client:open-menu',
-            icon = 'fa-solid fa-gun',
-            label = 'Open TDM Menu',
-            distance = 1.5
+        name = 'i-tdm-start',
+        coords = Config.startPed.targetZone, -- vector3
+        size = vec3(1, 1, Config.startPed.maxZ - Config.startPed.minZ),
+        rotation = Config.startPed.targetHeading,
+        debug = false,
+        options = {
+            {
+                type = 'client',
+                event = 'i-tdm:client:open-menu',
+                icon = 'fa-solid fa-gun',
+                label = 'Open TDM Menu',
+                distance = 1.5
+            }
         }
-    }
-})
-
+    })
 end)
 
 CreateThread(function()
@@ -763,9 +749,9 @@ end)
 local dmRespawning = false
 
 AddEventHandler('gameEventTriggered', function(event, data)
-    if (not inDMatch ) and (not inTDM) then return end
+    if (not inDMatch) and (not inTDM) then return end
     if event ~= 'CEventNetworkEntityDamage' then return end
-    local victim  = data[1]
+    local victim   = data[1]
     local attacker = data[2]
 
     if victim ~= PlayerPedId() then return end
@@ -775,33 +761,33 @@ AddEventHandler('gameEventTriggered', function(event, data)
 
     if health <= 103 then
         if dmRespawning then return end
-            CancelEvent()
-            SetEntityHealth(ped, 200)
+        CancelEvent()
+        SetEntityHealth(ped, 200)
 
-            dmRespawning = true
-            if inDMatch then
-                -- DMDeaths = DMDeaths + 1
+        dmRespawning = true
+        if inDMatch then
+            -- DMDeaths = DMDeaths + 1
 
-                SetPedCanRagdoll(ped, true)
-                SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+            SetPedCanRagdoll(ped, true)
+            SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
 
-                local attackerId = nil
-                if attacker ~= ped and IsEntityAPed(attacker) and IsPedAPlayer(attacker) then
-                    attackerId = NetworkGetPlayerIndexFromPed(attacker)
-                end
+            local attackerId = nil
+            if attacker ~= ped and IsEntityAPed(attacker) and IsPedAPlayer(attacker) then
+                attackerId = NetworkGetPlayerIndexFromPed(attacker)
+            end
 
-                if attackerId and attackerId ~= PlayerId() then
-                    TriggerServerEvent(
-                        'i-tdm:server:send-kill-msg',
-                        GetPlayerServerId(attackerId),
-                        GetPlayerServerId(PlayerId()),
-                        currDmap,
-                        activeMatchId
-                    )
-                end
+            if attackerId and attackerId ~= PlayerId() then
+                TriggerServerEvent(
+                    'i-tdm:server:send-kill-msg',
+                    GetPlayerServerId(attackerId),
+                    GetPlayerServerId(PlayerId()),
+                    currDmap,
+                    activeMatchId
+                )
+            end
 
-                CreateThread(function()
-                    Wait(1000)
+            CreateThread(function()
+                Wait(1000)
 
                 local _, lastWeapon = GetCurrentPedWeapon(ped)
                 spawnToRandomPosDm(currDmap, lastWeapon)
@@ -811,43 +797,45 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 setPedProperties(true, lastWeapon)
 
                 dmRespawning = false
-                end)
-            end
-
-            if inTDM then
-
-            local attackerPlayer = NetworkGetPlayerIndexFromPed(attacker)
-            if attackerPlayer ~= -1 then
-                local attackerSid = GetPlayerServerId(attackerPlayer)
-                local victimSid   = GetPlayerServerId(PlayerId())
-
-            if GetPlayerTeamByServerId(attackerSid) == GetPlayerTeamByServerId(victimSid) then
-                CancelEvent()
-                return
-            end
+            end)
         end
 
-                SetPedCanRagdoll(ped, true)
-                SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+        if inTDM then
+            -- local attackerPlayer = NetworkGetPlayerIndexFromPed(attacker)
+            -- if attackerPlayer ~= -1 then
+            --     local attackerSid = GetPlayerServerId(attackerPlayer)
+            --     local victimSid   = GetPlayerServerId(PlayerId())
 
-                local attackerId = nil
-                if attacker ~= ped and IsEntityAPed(attacker) and IsPedAPlayer(attacker) then
-                    attackerId = NetworkGetPlayerIndexFromPed(attacker)
-                end
+            --     print(GetPlayerServerId(attackerPlayer))
+            --     print(GetPlayerServerId(victimSid))
 
-                if attackerId and attackerId ~= PlayerId() then
-                    TriggerServerEvent(
-                        'i-tdm:server:send-kill-msg-tdm',
-                        GetPlayerServerId(attackerId),
-                        GetPlayerServerId(PlayerId()),
-                        TdmMap,
-                        activeTDMId,
-                        TdmTeam
-                    )
-                end
+            --     if GetPlayerTeamByServerId(attackerSid) == GetPlayerTeamByServerId(victimSid) then
+            --         CancelEvent()
+            --         return
+            --     end
+            -- end
 
-                CreateThread(function()
-                    Wait(1000)
+            SetPedCanRagdoll(ped, true)
+            SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+
+            local attackerId = nil
+            if attacker ~= ped and IsEntityAPed(attacker) and IsPedAPlayer(attacker) then
+                attackerId = NetworkGetPlayerIndexFromPed(attacker)
+            end
+
+            if attackerId and attackerId ~= PlayerId() then
+                TriggerServerEvent(
+                    'i-tdm:server:send-kill-msg-tdm',
+                    GetPlayerServerId(attackerId),
+                    GetPlayerServerId(PlayerId()),
+                    currTDmap,
+                    activeTDMId,
+                    TdmTeam
+                )
+            end
+
+            CreateThread(function()
+                Wait(1000)
 
                 local _, lastWeapon = GetCurrentPedWeapon(ped)
                 sendToTeamSpawn()
@@ -857,9 +845,9 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 setPedPropertiesTdm(true, lastWeapon)
 
                 dmRespawning = false
-                end)
-            end    
+            end)
         end
+    end
 end)
 
 
