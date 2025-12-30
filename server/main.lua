@@ -17,6 +17,32 @@ local function initializeTable()
     end
 end
 
+local function splitTeams(match)
+    local blueTeamStats = {}
+    local redTeamStats  = {}
+
+    if not match or not match.playerStats then
+        return blueTeamStats, redTeamStats
+    end
+
+    for playerId, stats in pairs(match.playerStats) do
+        local entry = {
+            name   = stats.name,
+            kills  = stats.kills or 0,
+            deaths = stats.deaths or 0
+        }
+
+        if stats.team == 'blue' then
+            blueTeamStats[playerId] = entry
+        elseif stats.team == 'red' then
+            redTeamStats[playerId] = entry
+        end
+    end
+
+    return blueTeamStats, redTeamStats
+end
+
+
 RegisterNetEvent('i-tdm:server:set-bucket', function(bucket)
     SetPlayerRoutingBucket(source, bucket)
 end)
@@ -56,11 +82,13 @@ RegisterNetEvent('i-tdm:server:send-kill-msg', function(killerId, victimId, map,
     local match = Dmaps[map].activeMatches[matchId]
     local killer = QBCore.Functions.GetPlayer(killerId)
     local victim = QBCore.Functions.GetPlayer(victimId)
+    local killerName = GetPlayerName(killerId)
+    local victimName = GetPlayerName(victimId)
     if not killer or not victim then return end
 
     if killerId == victimId then return end
-    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0 }
-    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0 }
+    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, name = killerName }
+    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0, name = victimName }
 
     match.playerStats[killerId].kills += 1
     match.playerStats[victimId].deaths += 1
@@ -81,8 +109,7 @@ RegisterNetEvent('i-tdm:server:send-kill-msg', function(killerId, victimId, map,
         true
     )
     for i = 1, #participants do
-        TriggerClientEvent('i-tdm:client:show-kill-msg', participants[i], GetPlayerName(killerId),
-            GetPlayerName(victimId))
+        TriggerClientEvent('i-tdm:client:show-kill-msg', participants[i], killerName,victimName)
     end
 end)
 
@@ -95,6 +122,8 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
 )
     local killer = QBCore.Functions.GetPlayer(killerId)
     local victim = QBCore.Functions.GetPlayer(victimId)
+    local killerName = GetPlayerName(killerId)
+    local victimName = GetPlayerName(victimId)
 
     if not killer or not victim then return end
 
@@ -121,8 +150,8 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
 
     if killerTeam == victimTeamCheck then return end
 
-    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0 }
-    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0 }
+    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, team = killerTeam, name = killerName  }
+    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0, name = victimName }
 
     match.playerStats[killerId].kills += 1
     match.playerStats[victimId].deaths += 1
@@ -136,9 +165,12 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
     end
 
     if match.redKills == match.maxKillToWin or match.blueKills == match.maxKillToWin then
+        local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
+        local blueTeamStats, redTeamStats = splitTeams(match)
         if match.redTeam then
             for _, playerData in pairs(match.redTeam) do
                 if playerData and playerData.source then
+                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, match.playerStats,'tdm',winningTeam,blueTeamStats,redTeamStats)
                     TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
                 end
             end
@@ -146,7 +178,7 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
         if match.blueTeam then
             for _, playerData in pairs(match.blueTeam) do
                 if playerData and playerData.source then
-                    -- show match results and then stop dm
+                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, match.playerStats,'tdm',winningTeam,blueTeamStats,redTeamStats)
                     TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
                 end
             end
@@ -482,6 +514,7 @@ CreateThread(function()
                         local participants = Dmaps[v.name].activeMatches[value.id].participants
                         for i = #participants, 1, -1 do
                             if QBCore.Functions.GetPlayer(tonumber(participants[i])) then
+                                TriggerClientEvent("i-tdm:client:show-results", participants[i], Dmaps[v.name].activeMatches[value.id].playerStats,'dm')
                                 TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
                                 table.remove(participants, i)
                             end
@@ -497,9 +530,12 @@ CreateThread(function()
                 if match and match.endingTime then
                     local curTime = os.time()
                     if match.endingTime <= curTime then
+                        local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
+                        local blueTeamStats, redTeamStats = splitTeams(match)
                         if match.redTeam then
                             for _, playerData in pairs(match.redTeam) do
                                 if playerData and playerData.source then
+                                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, match.playerStats,'tdm',winningTeam,blueTeamStats,redTeamStats)
                                     TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
                                 end
                             end
@@ -507,7 +543,7 @@ CreateThread(function()
                         if match.blueTeam then
                             for _, playerData in pairs(match.blueTeam) do
                                 if playerData and playerData.source then
-                                    -- show match results and then stop dm
+                                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, match.playerStats,'tdm',winningTeam,blueTeamStats,redTeamStats)
                                     TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
                                 end
                             end

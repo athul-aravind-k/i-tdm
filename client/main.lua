@@ -586,6 +586,25 @@ RegisterNetEvent('i-tdm:client:update-hud-stats', function(kills, deaths, heal)
     end
 end)
 
+RegisterNetEvent('i-tdm:client:show-results', function(stats, type, winningTeam,blueTeamStats,redTeamStats)
+    if type == 'dm' then 
+        SendNUIMessage({
+            type = 'matchend',
+            mode = 'deathmatch',
+            players = stats
+        })
+    elseif type == 'tdm' then
+            SendNUIMessage({
+                type = 'matchend',
+                mode = 'team-deathmatch',
+                winningTeam= winningTeam,
+                blueTeamPlayers = blueTeamStats,
+                redTeamPlayers= redTeamStats
+        })
+    end
+    SetNuiFocus(true,true)
+end)
+
 RegisterNetEvent('i-tdm:client:kick-player-tdm', function()
     SendNUIMessage({
         type = "close-ui",
@@ -779,7 +798,6 @@ AddEventHandler('gameEventTriggered', function(event, data)
 
         dmRespawning = true
         if inDMatch then
-            -- DMDeaths = DMDeaths + 1
 
             SetPedCanRagdoll(ped, true)
             SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)

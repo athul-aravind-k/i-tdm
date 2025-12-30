@@ -15,6 +15,7 @@ import Leaderboard from './screens/Leaderboard.vue'
 import ZoneWarning from './screens/ZoneWarning.vue'
 import UIToast from './components/UIToast.vue'
 import { notificationStore } from './components/uiNotificationStore'
+import MatchEndScreen from './screens/MatchEndScreen.vue'
 
 const uiVisible = ref(false)
 const screen = ref('main')
@@ -89,6 +90,11 @@ onMounted(() => {
           matches: data.matches
         }
         break
+      case 'matchend':
+        payload.value = data
+        uiVisible.value = true
+        screen.value = 'matchend'
+        break
         case 'notify':
         notificationStore.show(data.action, data.message);
         break
@@ -110,7 +116,8 @@ const currentComponent = computed(() => {
     tdmPassword: TdmPassword,
     activeMatches: ActiveTdms,
     activeTdms: ActiveTdms,
-    leaderboard: Leaderboard
+    leaderboard: Leaderboard,
+    matchend: MatchEndScreen 
   }[screen.value]
 })
 </script>
@@ -121,7 +128,7 @@ const currentComponent = computed(() => {
     v-if="uiVisible" 
     @keyup.esc="closeUI" 
     class="popup"
-    :style="currentComponent === Leaderboard ? { height: '100%', width: '100%', overflowY: 'auto' } : {}"
+    :style="(currentComponent === Leaderboard || currentComponent === MatchEndScreen) ? { height: '100%', width: '100%', overflowY: 'auto' } : {}"
   >
     <component
       :is="currentComponent"

@@ -84,22 +84,22 @@ Config.TDMClothes = {
         },
 
         female = {
-            ['tshirt_1'] = 14,
+            ['tshirt_1'] = 15,
             ['tshirt_2'] = 0,
 
-            ['torso_1'] = 54,
-            ['torso_2'] = 0, 
+            ['torso_1'] = 2,
+            ['torso_2'] = 12, 
 
-            ['arms'] = 25,
+            ['arms'] = 2,
 
-            ['pants_1'] = 33,
+            ['pants_1'] = 25,
             ['pants_2'] = 0,
 
             ['shoes_1'] = 25,
             ['shoes_2'] = 0,
 
             ['helmet_1'] = 114,
-            ['helmet_2'] = 0,
+            ['helmet_2'] = 6,
 
             ['bproof_1'] = 0,
             ['bproof_2'] = 0,
@@ -136,22 +136,22 @@ Config.TDMClothes = {
         },
 
         female = {
-            ['tshirt_1'] = 14,
+            ['tshirt_1'] = 15,
             ['tshirt_2'] = 0,
 
-            ['torso_1'] = 54,
+            ['torso_1'] = 2,
             ['torso_2'] = 3,
 
-            ['arms'] = 25,
+            ['arms'] = 2,
 
-            ['pants_1'] = 33,
+            ['pants_1'] = 25,
             ['pants_2'] = 0,
 
             ['shoes_1'] = 25,
             ['shoes_2'] = 0,
 
             ['helmet_1'] = 114,
-            ['helmet_2'] = 1,
+            ['helmet_2'] = 24,
 
             ['bproof_1'] = 0,
             ['bproof_2'] = 0,
@@ -163,7 +163,7 @@ Config.TDMClothes = {
 }
 
 
-Config.DMTime = 20    --minutes
+Config.DMTime = 10    --minutes
 
 Config.DM_Weapons = { --first weapon will be forced in hand
     'WEAPON_CARBINERIFLE',
