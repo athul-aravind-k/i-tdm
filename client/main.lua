@@ -18,6 +18,7 @@ local TdmMap = nil
 local HealThread = nil
 local InOwnSpawn = false
 local InEnemySpawn = false
+local TDMweapon = 'assault'
 
 local function setClothes(team)
     local ped = PlayerPedId()
@@ -122,7 +123,7 @@ end
 
 local function setPedPropertiesTdm(clipReload, lastWeapon)
     local ped = PlayerPedId()
-    local weapons = Config.DM_Weapons
+    local weapons = Config.TDM_Weapons[TDMweapon]
     for i = 1, #weapons do
         GiveWeaponToPed(ped, weapons[i], 200, false, false)
         if (clipReload) then
@@ -393,6 +394,7 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     local ped = PlayerPedId()
     activeMatchId = matchId
     TDMMatchData = data.match
+    TDMweapon = data.weapon
 
     if not TdmMap then return end
     for _, z in pairs(Zones) do
@@ -418,7 +420,6 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
         })
         inTDM = true
         InMatch = true
-        -- todo: change to tdm cloths
         setClothes(TdmTeam)
         setPedPropertiesTdm(false, nil)
         Wait(2000)

@@ -243,6 +243,8 @@ function joinTDM(matchId,map) {
   display: flex;
   gap: 8px;
   cursor: pointer;
+  justify-content: center;
+  align-items: center;
 }
 
 .spacer {

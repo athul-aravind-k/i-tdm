@@ -10,10 +10,6 @@ const props = defineProps({
   }
 })
 
-// let props = {
-//   payload: { "map": "map1", "matchId": 1, "playerId": 1, "mapTable": { "time": 5, "maxMembers": 10, "id": 1, "blueTeam": { "AIE74953": { "name": "insane blue", "source": 2 } }, "weapon": "assault", "bucketId": 2, "creatorId": 1, "redTeam": { "AIE73953": { "name": "insane gwak", "source": 1 } }, "started": false, "creator": "InsanE", "password": "" } }
-// }
-
 const emit = defineEmits(['change', 'close',])
 
 const map = ref(null)

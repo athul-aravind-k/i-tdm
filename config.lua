@@ -166,16 +166,40 @@ Config.TDMClothes = {
 Config.DMTime = 20    --minutes
 
 Config.DM_Weapons = { --first weapon will be forced in hand
-    0xFAD1F1C9,       -- carbine mk2
-    0xAF113F99,       -- Advanced Rifle
-    0x7F229F94,       -- bullpup rifle
-    0x92A27487,       --dagger
-    0xC1B3C3D1,       --heavy rifle
-    0x22D8FE39,       --ap pistol
-    0xEFE7E2DF,       --assault smg
-    0x2BE6766B,       --micro smg
-    0xEF951FBB,       --Double Barrel Shotgun
-    0x1D073A89,       --pump shotgun
+    'WEAPON_CARBINERIFLE',
+    'WEAPON_ADVANCEDRIFLE',
+    'WEAPON_SPECIALCARBINE_MK2',
+    'WEAPON_ASSAULTRIFLE',
+    'WEAPON_MG',
+    'WEAPON_COMBATMG',
+    'WEAPON_BAT'
+}
+
+Config.TDM_Weapons = {
+    assault = {
+        'WEAPON_CARBINERIFLE',
+        'WEAPON_ADVANCEDRIFLE',
+        'WEAPON_SPECIALCARBINE_MK2',
+        'WEAPON_ASSAULTRIFLE'
+    },
+    sniper = {
+        'WEAPON_HEAVYSNIPER',
+        'WEAPON_MARKSMANRIFLE_MK2',
+        'WEAPON_SNIPERRIFLE',
+        'WEAPON_MUSKET'
+    },
+    smg = {
+        'WEAPON_SMG',
+        'WEAPON_ASSAULTSMG',
+        'WEAPON_SMG_MK2',
+        'WEAPON_MICROSMG'
+    },
+    shotgun = {
+        'WEAPON_COMBATSHOTGUN',
+        'WEAPON_PUMPSHOTGUN_MK2',
+        'WEAPON_PUMPSHOTGUN',
+        'WEAPON_ASSAULTSHOTGUN'
+    }
 }
 
 Config.TDMZoneOutKillTime = 5 --seconds

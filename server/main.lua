@@ -259,6 +259,7 @@ RegisterNetEvent("i-tdm:server:start-tdm", function(data)
                     team = "red",
                     match = match,
                     bucketId = match.bucketId,
+                    weapon = match.weapon
                 }
             )
         end
@@ -275,6 +276,7 @@ RegisterNetEvent("i-tdm:server:start-tdm", function(data)
                     team = "blue",
                     match = match,
                     bucketId = match.bucketId,
+                    weapon = match.weapon
                 }
             )
         end
