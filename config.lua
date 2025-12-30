@@ -12,9 +12,10 @@ Config.startPed = {
 
 Config.pedInvincibleTime = 3 --seconds
 
-Config.reloadSkinEvent =
-'illenium-appearance:client:reloadSkin' -- change this event according to the clothing system used.
+Config.reloadSkinCommand =
+'refreshskin' -- change this event according to the clothing system used.
 
+-- Deathmatch cloths
 Config.Clothes = {
     --1 is drawable id and 2 is texture id
     male = {
@@ -53,6 +54,114 @@ Config.Clothes = {
     }
 
 }
+
+-- TDM Cloths Make it different for blue and red to distinguish 
+Config.TDMClothes = {
+    blue = {
+        male = {
+            ['tshirt_1'] = 15,
+            ['tshirt_2'] = 0,
+
+            ['torso_1'] = 16,
+            ['torso_2'] = 1,
+
+            ['arms'] = 19,
+
+            ['pants_1'] = 17,
+            ['pants_2'] = 6,
+
+            ['shoes_1'] = 4,
+            ['shoes_2'] = 0,
+
+            ['helmet_1'] = 115,
+            ['helmet_2'] = 6,
+
+            ['bproof_1'] = 0,
+            ['bproof_2'] = 0,
+
+            ['mask_1'] = 52,
+            ['mask_2'] = 0
+        },
+
+        female = {
+            ['tshirt_1'] = 14,
+            ['tshirt_2'] = 0,
+
+            ['torso_1'] = 54,
+            ['torso_2'] = 0, 
+
+            ['arms'] = 25,
+
+            ['pants_1'] = 33,
+            ['pants_2'] = 0,
+
+            ['shoes_1'] = 25,
+            ['shoes_2'] = 0,
+
+            ['helmet_1'] = 114,
+            ['helmet_2'] = 0,
+
+            ['bproof_1'] = 0,
+            ['bproof_2'] = 0,
+
+            ['mask_1'] = 52,
+            ['mask_2'] = 0
+        }
+    },
+
+    red = {
+        male = {
+            ['tshirt_1'] = 15,
+            ['tshirt_2'] = 0,
+
+            ['torso_1'] = 16,
+            ['torso_2'] = 2,
+
+            ['arms'] = 19,
+
+            ['pants_1'] = 17,
+            ['pants_2'] = 9,
+
+            ['shoes_1'] = 4,
+            ['shoes_2'] = 4,
+
+            ['helmet_1'] = 115,
+            ['helmet_2'] = 24,
+
+            ['bproof_1'] = 0,
+            ['bproof_2'] = 0,
+
+            ['mask_1'] = 52,
+            ['mask_2'] = 0
+        },
+
+        female = {
+            ['tshirt_1'] = 14,
+            ['tshirt_2'] = 0,
+
+            ['torso_1'] = 54,
+            ['torso_2'] = 3,
+
+            ['arms'] = 25,
+
+            ['pants_1'] = 33,
+            ['pants_2'] = 0,
+
+            ['shoes_1'] = 25,
+            ['shoes_2'] = 0,
+
+            ['helmet_1'] = 114,
+            ['helmet_2'] = 1,
+
+            ['bproof_1'] = 0,
+            ['bproof_2'] = 0,
+
+            ['mask_1'] = 52,
+            ['mask_2'] = 0
+        }
+    }
+}
+
 
 Config.DMTime = 20    --minutes
 

@@ -87,9 +87,8 @@ onMounted(() => {
       break
 
       case 'kill-msg-tdm':
-        console.log(JSON.stringify(data))
-        redTeamKills.value = data?.message?.redTeamKills
-        blueTeamKills.value = data?.message?.blueTeamKills
+        redTeamKills.value = data?.message?.redKills
+        blueTeamKills.value = data?.message?.blueKills
       break
     }
   })

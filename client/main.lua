@@ -18,35 +18,44 @@ local TdmMap = nil
 local HealThread = nil
 local InOwnSpawn = false
 local InEnemySpawn = false
-local TDMMatchData = {}
 
-local function setClothes()
+local function setClothes(team)
     local ped = PlayerPedId()
     local PlayerData = QBCore.Functions.GetPlayerData()
-    if PlayerData.charinfo.gender == 0 then
-        SetPedComponentVariation(ped, 1, Config.Clothes.male['mask_1'], Config.Clothes.male['mask_2'], 0)          --mask
-        SetPedComponentVariation(ped, 3, Config.Clothes.male['arms'], 0, 0)                                        --arms
-        SetPedComponentVariation(ped, 8, Config.Clothes.male['tshirt_1'], Config.Clothes.male['tshirt_2'], 0)      --t-shirt
-        SetPedComponentVariation(ped, 11, Config.Clothes.male['torso_1'], Config.Clothes.male['torso_2'], 0)       --torso2
-        SetPedComponentVariation(ped, 9, Config.Clothes.male['bproof_1'], Config.Clothes.male['bproof_2'], 0)      --vest
-        SetPedComponentVariation(ped, 10, Config.Clothes.male['decals_1'], Config.Clothes.male['decals_2'], 0)     --decals
-        SetPedComponentVariation(ped, 7, Config.Clothes.male['chain_1'], Config.Clothes.male['chain_2'], 0)        --accessory
-        SetPedComponentVariation(ped, 4, Config.Clothes.male['pants_1'], Config.Clothes.male['pants_2'], 0)        -- pants
-        SetPedComponentVariation(ped, 6, Config.Clothes.male['shoes_1'], Config.Clothes.male['shoes_2'], 0)        --shoes
-        SetPedPropIndex(ped, 0, Config.Clothes.male['helmet_1'], Config.Clothes.male['helmet_2'], true)            --hat
-        SetPedPropIndex(ped, 2, Config.Clothes.male['ears_1'], Config.Clothes.male['ears_2'], true)                --ear
+
+    if not PlayerData or not PlayerData.charinfo then return end
+
+    local gender = PlayerData.charinfo.gender == 0 and "male" or "female"
+
+    local clothes
+    if team and Config.TDMClothes[team] then
+        clothes = Config.TDMClothes[team][gender]
     else
-        SetPedComponentVariation(ped, 1, Config.Clothes.female['mask_1'], Config.Clothes.female['mask_2'], 0)      --mask
-        SetPedComponentVariation(ped, 3, Config.Clothes.female['arms'], 0, 0)                                      --arms
-        SetPedComponentVariation(ped, 8, Config.Clothes.female['tshirt_1'], Config.Clothes.female['tshirt_2'], 0)  --t-shirt
-        SetPedComponentVariation(ped, 11, Config.Clothes.female['torso_1'], Config.Clothes.female['torso_2'], 0)   --torso2
-        SetPedComponentVariation(ped, 9, Config.Clothes.female['bproof_1'], Config.Clothes.female['bproof_2'], 0)  --vest
-        SetPedComponentVariation(ped, 10, Config.Clothes.female['decals_1'], Config.Clothes.female['decals_2'], 0) --decals
-        SetPedComponentVariation(ped, 7, Config.Clothes.female['chain_1'], Config.Clothes.female['chain_2'], 0)    --accessory
-        SetPedComponentVariation(ped, 4, Config.Clothes.female['pants_1'], Config.Clothes.female['pants_2'], 0)    -- pants
-        SetPedComponentVariation(ped, 6, Config.Clothes.female['shoes_1'], Config.Clothes.female['shoes_2'], 0)    --shoes
-        SetPedPropIndex(ped, 0, Config.Clothes.female['helmet_1'], Config.Clothes.female['helmet_2'], true)        --hat
-        SetPedPropIndex(ped, 2, Config.Clothes.female['ears_1'], Config.Clothes.female['ears_2'], true)            --ear
+        clothes = Config.Clothes[gender]
+    end
+
+    if not clothes then return end
+
+    ClearAllPedProps(ped)
+
+    -- components
+    SetPedComponentVariation(ped, 1,  clothes.mask_1   or 0, clothes.mask_2   or 0, 0) -- mask
+    SetPedComponentVariation(ped, 3,  clothes.arms     or 0, 0, 0)                     -- arms
+    SetPedComponentVariation(ped, 8,  clothes.tshirt_1 or 0, clothes.tshirt_2 or 0, 0) -- t-shirt
+    SetPedComponentVariation(ped, 11, clothes.torso_1  or 0, clothes.torso_2  or 0, 0) -- torso
+    SetPedComponentVariation(ped, 9,  clothes.bproof_1 or 0, clothes.bproof_2 or 0, 0) -- vest
+    SetPedComponentVariation(ped, 10, clothes.decals_1 or 0, clothes.decals_2 or 0, 0) -- decals
+    SetPedComponentVariation(ped, 7,  clothes.chain_1  or 0, clothes.chain_2  or 0, 0) -- chain
+    SetPedComponentVariation(ped, 4,  clothes.pants_1  or 0, clothes.pants_2  or 0, 0) -- pants
+    SetPedComponentVariation(ped, 6,  clothes.shoes_1  or 0, clothes.shoes_2  or 0, 0) -- shoes
+
+    -- props
+    if clothes.helmet_1 and clothes.helmet_1 >= 0 then
+        SetPedPropIndex(ped, 0, clothes.helmet_1, clothes.helmet_2 or 0, true)
+    end
+
+    if clothes.ears_1 and clothes.ears_1 >= 0 then
+        SetPedPropIndex(ped, 2, clothes.ears_1, clothes.ears_2 or 0, true)
     end
 end
 
@@ -410,7 +419,7 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
         inTDM = true
         InMatch = true
         -- todo: change to tdm cloths
-        setClothes()
+        setClothes(TdmTeam)
         setPedPropertiesTdm(false, nil)
         Wait(2000)
         SetEntityInvincible(ped, false)
@@ -491,7 +500,8 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         SwitchInPlayer(PlayerPedId())
         NetworkResurrectLocalPlayer(Config.startPed.pos, 1000, true)
         TriggerEvent("hospital:client:Revive")
-        TriggerEvent(Config.reloadSkinEvent)
+        ExecuteCommand(Config.reloadSkinCommand)
+        ExecuteCommand('refreshskin')
         TriggerServerEvent('i-tdm:server:remove-participant-tdm', currTDmap, activeMatchId)
         TdmTeam = nil
         currTDmap = nil
@@ -499,6 +509,8 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         InEnemySpawn = false
         HealThread = nil
         activeMatchId = nil
+        DMDeaths = 0
+        DMKills = 0
         for _, z in pairs(Zones) do
             z:destroy()
         end
@@ -526,7 +538,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         SwitchInPlayer(PlayerPedId())
         NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
         TriggerEvent("hospital:client:Revive")
-        TriggerEvent(Config.reloadSkinEvent)
+        ExecuteCommand(Config.reloadSkinCommand)
         deathMatchZone:destroy()
         TriggerEvent('i-tdm:toggle-ambulance-job', true)
         TriggerServerEvent('i-tdm:server:remove-participant', currDmap, activeMatchId)
@@ -551,13 +563,13 @@ RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
     end
 end)
 
-RegisterNetEvent('i-tdm:client:show-kill-msg-tdm', function(killerName, victimName, typeX, redKills, blueKills)
+RegisterNetEvent('i-tdm:client:show-kill-msg-tdm', function(killerName, victimName, victimTeam, redKills, blueKills)
     SendNUIMessage({
         type = "kill-msg-tdm",
         message = {
             killer = killerName,
             killed = victimName,
-            type = typeX,
+            type = victimTeam==TdmTeam and 'killed' or 'dead',
             redKills = redKills,
             blueKills = blueKills
         }
