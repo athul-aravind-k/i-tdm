@@ -16,12 +16,35 @@ const map = ref(null)
 const matchId = ref(null)
 const playerId = ref(null)
 const match = ref(null)
-const currentTeam = ref(null)
 
 const isOwner = computed(() => {
   return match.value && playerId.value === match.value.creatorId
 })
 
+// Computed property to check which team the player is currently in
+const currentPlayerTeam = computed(() => {
+  if (!match.value || !playerId.value) return null
+  
+  // Check if player is in blue team
+  if (match.value.blueTeam) {
+    for (const player of Object.values(match.value.blueTeam)) {
+      if (player && player.source === playerId.value) {
+        return 'blue'
+      }
+    }
+  }
+  
+  // Check if player is in red team
+  if (match.value.redTeam) {
+    for (const player of Object.values(match.value.redTeam)) {
+      if (player && player.source === playerId.value) {
+        return 'red'
+      }
+    }
+  }
+  
+  return null
+})
 
 watch(
   () => props.payload,
@@ -31,9 +54,17 @@ watch(
     map.value = newPayload.map
     matchId.value = newPayload.matchId
     playerId.value = newPayload.playerId
-    match.value = newPayload.mapTable
+    if (newPayload.mapTable) {
+      match.value = {
+        ...newPayload.mapTable,
+        blueTeam: newPayload.mapTable.blueTeam ? { ...newPayload.mapTable.blueTeam } : {},
+        redTeam: newPayload.mapTable.redTeam ? { ...newPayload.mapTable.redTeam } : {}
+      }
+    } else {
+      match.value = null
+    }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 function getResourceName() {
@@ -44,7 +75,6 @@ function getResourceName() {
 
 function joinTeam(team) {
   if (!match.value) return
-  currentTeam.value = team
   fetch(`https://${getResourceName()}/join-tdm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -194,7 +224,7 @@ function goBack() {
             <div class="tdm-roster">
               <div v-for="player in Object.values(match.blueTeam || {})" :key="player.source" class="tdm-player">
                 <div class="tdm-player-left">
-                  <Crown v-if="isOwner" class="tdm-crown" />
+                  <Crown v-if="isOwner || match.creatorId===player.source" class="tdm-crown" />
                   <span>{{ player.name }}</span>
                   <span
                     v-if="player.source === playerId"
@@ -209,8 +239,8 @@ function goBack() {
               </div>
             </div>
 
-            <button class="tdm-join blue" :disabled="!!currentPlayer" @click="joinTeam('blue')">
-              {{ currentTeam === 'blue' ? 'Current Team' : 'Join' }}
+            <button class="tdm-join blue" :disabled="currentPlayerTeam === 'blue'" @click="joinTeam('blue')">
+              {{ currentPlayerTeam === 'blue' ? 'Current Team' : 'Join' }}
             </button>
           </div>
 
@@ -221,7 +251,7 @@ function goBack() {
             <div class="tdm-roster">
               <div v-for="player in Object.values(match.redTeam || {})" :key="player.source" class="tdm-player">
                 <div class="tdm-player-left">
-                  <Crown v-if="isOwner" class="tdm-crown" />
+                  <Crown v-if="isOwner || match.creatorId===player.source " class="tdm-crown" />
                   <span>{{ player.name }}</span>
                   <span
                     v-if="player.source === playerId"
@@ -236,8 +266,8 @@ function goBack() {
               </div>
             </div>
 
-            <button class="tdm-join red" :disabled="!!currentPlayer" @click="joinTeam('red')">
-              {{ currentTeam === 'red' ? 'Current Team' : 'Join' }}
+            <button class="tdm-join red" :disabled="currentPlayerTeam === 'red'" @click="joinTeam('red')">
+              {{ currentPlayerTeam === 'red' ? 'Current Team' : 'Join' }}
             </button>
           </div>
 

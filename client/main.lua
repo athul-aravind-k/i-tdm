@@ -222,6 +222,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
                     SetEntityInvincible(ped, false)
                     inDMatch = true
                     InMatch = true
+                    exports.ox_inventory:weaponWheel(true)
                 end, map, mId, false)
             else
                 notify('match Full', 'error')
@@ -299,6 +300,7 @@ local function joinTeamDeathMatch(matchId, map)
 end
 
 RegisterNetEvent("i-tdm:client:updateLobby", function(map, matchId, matchData)
+    if InMatch then return end
     showJoinUi(map, matchData);
 end);
 
@@ -386,6 +388,11 @@ local function StopHealing()
 end
 
 RegisterNetEvent("i-tdm:client:startTDM", function(data)
+    SendNUIMessage({
+        type = "close-ui",
+        message = {}
+        })
+        SetNuiFocus(false, false)
     local mapName = data.map
     TdmTeam = data.team
     TdmMap = Config.TDM_maps[mapName]
@@ -414,12 +421,9 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     SwitchInPlayer(ped)
     QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
         toggleHud(true, timeLeft, true)
-        SendNUIMessage({
-            type = "close-ui",
-            message = {}
-        })
         inTDM = true
         InMatch = true
+        exports.ox_inventory:weaponWheel(true)
         setClothes(TdmTeam)
         setPedPropertiesTdm(false, nil)
         Wait(2000)
@@ -489,17 +493,18 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
     if inTDM then
         inTDM = false
         InMatch = false
+        exports.ox_inventory:weaponWheel(false)
         local ped = PlayerPedId()
         toggleHud(false, 0, false)
         SwitchOutPlayer(ped, 0, 1)
         Wait(2000)
         TriggerServerEvent('i-tdm:server:set-bucket', currBucket)
         currBucket = nil
-        SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
+        SetEntityCoords(ped, Config.leaveSpawn, false, false, false, false)
         RemoveAllPedWeapons(ped)
         Wait(2000)
         SwitchInPlayer(PlayerPedId())
-        NetworkResurrectLocalPlayer(Config.startPed.pos, 1000, true)
+        NetworkResurrectLocalPlayer(Config.leaveSpawn, 1000, true)
         TriggerEvent("hospital:client:Revive")
         ExecuteCommand(Config.reloadSkinCommand)
         ExecuteCommand('refreshskin')
@@ -518,6 +523,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
     elseif inDMatch then
         inDMatch = false
         InMatch = false
+        exports.ox_inventory:weaponWheel(false)
         local ped = PlayerPedId()
         toggleHud(false, 0, false)
         SwitchOutPlayer(ped, 0, 1)
@@ -526,18 +532,17 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         DMDeaths = 0
         DMKills = 0
         currBucket = nil
-        SetEntityCoordsNoOffset(ped, Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z, false, false,
+        SetEntityCoordsNoOffset(ped, Config.leaveSpawn.x, Config.leaveSpawn.y, Config.leaveSpawn.z, false, false,
             false)
-        RequestCollisionAtCoord(Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z)
+        RequestCollisionAtCoord(Config.leaveSpawn.x, Config.leaveSpawn.y, Config.leaveSpawn.z)
         while not HasCollisionLoadedAroundEntity(ped) do
-            RequestCollisionAtCoord(Config.startPed.pos.x, Config.startPed.pos.y, Config.startPed.pos.z)
+            RequestCollisionAtCoord(Config.leaveSpawn.x, Config.leaveSpawn.y, Config.leaveSpawn.z)
             Wait(0)
         end
-        -- SetEntityCoords(ped, Config.startPed.pos, false, false, false, false)
         RemoveAllPedWeapons(ped)
         Wait(2000)
         SwitchInPlayer(PlayerPedId())
-        NetworkResurrectLocalPlayer(Config.startPed.pos, true, false)
+        NetworkResurrectLocalPlayer(Config.leaveSpawn, true, false)
         TriggerEvent("hospital:client:Revive")
         ExecuteCommand(Config.reloadSkinCommand)
         deathMatchZone:destroy()
@@ -570,7 +575,7 @@ RegisterNetEvent('i-tdm:client:show-kill-msg-tdm', function(killerName, victimNa
         message = {
             killer = killerName,
             killed = victimName,
-            type = victimTeam==TdmTeam and 'killed' or 'dead',
+            type = victimTeam==TdmTeam and 'dead' or 'killed',
             redKills = redKills,
             blueKills = blueKills
         }
@@ -598,6 +603,7 @@ RegisterNetEvent('i-tdm:client:show-results', function(stats, type, winningTeam,
                 type = 'matchend',
                 mode = 'team-deathmatch',
                 winningTeam= winningTeam,
+                players = {},
                 blueTeamPlayers = blueTeamStats,
                 redTeamPlayers= redTeamStats
         })
@@ -782,13 +788,24 @@ local dmRespawning = false
 
 AddEventHandler('gameEventTriggered', function(event, data)
     if (not inDMatch) and (not inTDM) then return end
+    
+    local ped = PlayerPedId()
+    
+    if event == 'CEventShockingSeenWeapon' or 
+       event == 'CEventShockingGunshotFired' or 
+       event == 'CEventShockingDeadPed' or
+       event == 'CEventShockingPedInjured' or
+       event == 'CEventShockingExplosion' or
+       event == 'CEventShockingPedThreat' then
+        return
+    end
+    
     if event ~= 'CEventNetworkEntityDamage' then return end
     local victim   = data[1]
     local attacker = data[2]
 
     if victim ~= PlayerPedId() then return end
 
-    local ped = PlayerPedId()
     local health = GetEntityHealth(ped)
 
     if health <= 103 then
@@ -920,4 +937,8 @@ CreateThread(function()
             DisableControlAction(0, 25, true) -- aim
         end
     end
+end)
+
+exports('IsInMatch', function()
+    return InMatch
 end)

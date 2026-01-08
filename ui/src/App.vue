@@ -77,6 +77,7 @@ onMounted(() => {
           playerId: data.playerId,
           mapTable: data.mapTable
         }
+        uiVisible.value = true
         break
 
       case 'show-active-matches':

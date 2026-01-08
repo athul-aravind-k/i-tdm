@@ -23,17 +23,34 @@ function calculateKD(k, d) {
   return d === 0 ? k.toFixed(2) : (k / d).toFixed(2)
 }
 
-const sortedBlue = computed(() =>
-  [...props?.payload?.blueTeamPlayers??[]].sort((a, b) => b.kills - a.kills)
-)
+const sortedBlue = computed(() => {
+  const players = props?.payload?.blueTeamPlayers
+  if (!Array.isArray(players)) return []
+  const result = [...players]
+    .filter(p => p != null)
+    .sort((a, b) => (b?.kills ?? 0) - (a?.kills ?? 0))
+  return result
+})
 
-const sortedRed = computed(() =>
-  [...props?.payload?.redTeamPlayers??[]].sort((a, b) => b.kills - a.kills)
-)
+const sortedRed = computed(() => {
+  const players = props?.payload?.redTeamPlayers
+  if (!Array.isArray(players)) return []
+  const result = [...players]
+    .filter(p => p != null)
+    .sort((a, b) => (b?.kills ?? 0) - (a?.kills ?? 0))
+  return result
+})
 
-const sortedPlayers = computed(() =>
-  [...props?.payload?.players??[]].sort((a, b) => b.kills - a.kills)
-)
+const sortedPlayers = computed(() => {
+  const players = props?.payload?.players
+  console.log(JSON.stringify(players))
+  if (!Array.isArray(players)) return []
+  const result = [...players]
+    .filter(p => p != null)
+    .sort((a, b) => (b?.kills ?? 0) - (a?.kills ?? 0))
+  console.log('sortedPlayers:', JSON.stringify(result))
+  return result
+})
 </script>
 
 <template>

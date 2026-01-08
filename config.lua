@@ -10,10 +10,12 @@ Config.startPed = {
     maxZ = 29.29,
 }
 
+Config.leaveSpawn = vector4(-107.88, -947.95, 28.95, 248.59)
+
 Config.pedInvincibleTime = 3 --seconds
 
 Config.reloadSkinCommand =
-'refreshskin' -- change this event according to the clothing system used.
+'reloadskin' -- change this event according to the clothing system used.
 
 -- Deathmatch cloths
 Config.Clothes = {
@@ -59,22 +61,22 @@ Config.Clothes = {
 Config.TDMClothes = {
     blue = {
         male = {
-            ['tshirt_1'] = 15,
-            ['tshirt_2'] = 0,
+            ['tshirt_1'] = 5,
+            ['tshirt_2'] = 2,
 
-            ['torso_1'] = 16,
-            ['torso_2'] = 1,
+            ['torso_1'] = 7,
+            ['torso_2'] = 3,
 
-            ['arms'] = 19,
+            ['arms'] = 14,
 
-            ['pants_1'] = 17,
-            ['pants_2'] = 6,
+            ['pants_1'] = 5,
+            ['pants_2'] = 3,
 
-            ['shoes_1'] = 4,
-            ['shoes_2'] = 0,
+            ['shoes_1'] = 7,
+            ['shoes_2'] = 1,
 
-            ['helmet_1'] = 115,
-            ['helmet_2'] = 6,
+            ['helmet_1'] = 144,
+            ['helmet_2'] = 18,
 
             ['bproof_1'] = 0,
             ['bproof_2'] = 0,
@@ -87,45 +89,45 @@ Config.TDMClothes = {
             ['tshirt_1'] = 15,
             ['tshirt_2'] = 0,
 
-            ['torso_1'] = 2,
-            ['torso_2'] = 12, 
+            ['torso_1'] = 13,
+            ['torso_2'] = 10,
 
-            ['arms'] = 2,
+            ['arms'] = 15,
 
-            ['pants_1'] = 25,
-            ['pants_2'] = 0,
+            ['pants_1'] = 86,
+            ['pants_2'] = 1,
 
-            ['shoes_1'] = 25,
+            ['shoes_1'] = 1,
             ['shoes_2'] = 0,
 
-            ['helmet_1'] = 114,
-            ['helmet_2'] = 6,
+            ['helmet_1'] = 126,
+            ['helmet_2'] = 18,
 
             ['bproof_1'] = 0,
             ['bproof_2'] = 0,
 
-            ['mask_1'] = 52,
+            ['mask_1'] = 0,
             ['mask_2'] = 0
         }
     },
 
     red = {
         male = {
-            ['tshirt_1'] = 15,
-            ['tshirt_2'] = 0,
+            ['tshirt_1'] = 5,
+            ['tshirt_2'] = 2,
 
-            ['torso_1'] = 16,
-            ['torso_2'] = 2,
+            ['torso_1'] = 7,
+            ['torso_2'] = 5,
 
-            ['arms'] = 19,
+            ['arms'] = 14,
 
-            ['pants_1'] = 17,
-            ['pants_2'] = 9,
+            ['pants_1'] = 5,
+            ['pants_2'] = 5,
 
-            ['shoes_1'] = 4,
-            ['shoes_2'] = 4,
+            ['shoes_1'] = 7,
+            ['shoes_2'] = 1,
 
-            ['helmet_1'] = 115,
+            ['helmet_1'] = 144,
             ['helmet_2'] = 24,
 
             ['bproof_1'] = 0,
@@ -139,24 +141,24 @@ Config.TDMClothes = {
             ['tshirt_1'] = 15,
             ['tshirt_2'] = 0,
 
-            ['torso_1'] = 2,
-            ['torso_2'] = 3,
+            ['torso_1'] = 13,
+            ['torso_2'] = 5,
 
-            ['arms'] = 2,
+            ['arms'] = 15,
 
-            ['pants_1'] = 25,
-            ['pants_2'] = 0,
+            ['pants_1'] = 86,
+            ['pants_2'] = 4,
 
-            ['shoes_1'] = 25,
+            ['shoes_1'] = 1,
             ['shoes_2'] = 0,
 
-            ['helmet_1'] = 114,
+            ['helmet_1'] = 126,
             ['helmet_2'] = 24,
 
             ['bproof_1'] = 0,
             ['bproof_2'] = 0,
 
-            ['mask_1'] = 52,
+            ['mask_1'] = 0,
             ['mask_2'] = 0
         }
     }
