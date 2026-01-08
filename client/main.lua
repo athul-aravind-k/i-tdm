@@ -222,6 +222,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
                     SetEntityInvincible(ped, false)
                     inDMatch = true
                     InMatch = true
+                    TriggerEvent('wais:hudv6:client:hideHud', true)
                     exports.ox_inventory:weaponWheel(true)
                 end, map, mId, false)
             else
@@ -424,6 +425,7 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
         inTDM = true
         InMatch = true
         exports.ox_inventory:weaponWheel(true)
+        TriggerEvent('wais:hudv6:client:hideHud', true)
         setClothes(TdmTeam)
         setPedPropertiesTdm(false, nil)
         Wait(2000)
@@ -494,6 +496,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         inTDM = false
         InMatch = false
         exports.ox_inventory:weaponWheel(false)
+        TriggerEvent('wais:hudv6:client:hideHud', false)
         local ped = PlayerPedId()
         toggleHud(false, 0, false)
         SwitchOutPlayer(ped, 0, 1)
@@ -523,6 +526,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
     elseif inDMatch then
         inDMatch = false
         InMatch = false
+        TriggerEvent('wais:hudv6:client:hideHud', false)
         exports.ox_inventory:weaponWheel(false)
         local ped = PlayerPedId()
         toggleHud(false, 0, false)

@@ -9,12 +9,41 @@ import {
   Shield
 } from 'lucide-vue-next'
 
+let audioUnlocked = false
+
+const killSounds = [
+  new Audio('assets/sounds/kill-1.ogg'),
+  new Audio('assets/sounds/kill-2.ogg'),
+  new Audio('assets/sounds/kill-3.ogg'),
+  new Audio('assets/sounds/kill-4.ogg'),
+  new Audio('assets/sounds/kill-5.ogg')
+]
+
+killSounds.forEach(sound => {
+  sound.volume = 0.6
+  sound.preload = 'auto'
+})
+
+window.addEventListener('click', unlockAudio, { once: true })
+window.addEventListener('keydown', unlockAudio, { once: true })
+
+const prevKills = ref(0)
 const isTDM = ref(false)
 const visible = ref(false)
 const timerVisible = ref(false)
 const timeRemaining = ref(0)
 const blueTeamKills = ref(0)
 const redTeamKills = ref(0)
+
+const killStreak = ref(0)
+const showKillEffect = ref(false)
+const STREAK_DURATION = 6000
+const streakTimeLeft = ref(0)
+
+let streakInterval = null
+
+let resetTimer = null
+
 
 let timerInterval = null
 let timerEnd = 0
@@ -64,6 +93,11 @@ const healthState = computed(() => {
   return 'red'
 })
 
+const streakPercent = computed(() =>
+  ((streakTimeLeft.value / STREAK_DURATION) * 100).toFixed(2)
+)
+
+
 onMounted(() => {
   window.addEventListener('message', (event) => {
     const data = event.data
@@ -82,9 +116,18 @@ onMounted(() => {
         }
         break
 
-      case 'update-stats':
+      case 'update-stats': {
+        const incomingKills = data.message.kills ?? stats.kills
         Object.assign(stats, data.message)
-      break
+        if (incomingKills > prevKills.value) {
+          const diff = incomingKills - prevKills.value
+          for (let i = 0; i < diff; i++) {
+            onKill()
+          }
+        }
+        prevKills.value = stats.kills
+        break
+}
 
       case 'kill-msg-tdm':
         redTeamKills.value = data?.message?.redKills
@@ -123,6 +166,72 @@ function stopTimer() {
 
   timerVisible.value = false
   timeRemaining.value = 0
+}
+
+function playKillSound(streak) {
+  const index = Math.min(streak, 5) - 1
+  const sound = killSounds[index]
+
+  if (!sound) return
+
+  sound.currentTime = 0
+  sound.play().catch(() => {})
+}
+
+
+function triggerKillEffect() {
+  showKillEffect.value = false
+  requestAnimationFrame(() => {
+    showKillEffect.value = true
+  })
+}
+
+function onKill() {
+  if (resetTimer) clearTimeout(resetTimer)
+  if (streakInterval) clearInterval(streakInterval)
+
+  killStreak.value = Math.min(killStreak.value + 1, 5)
+
+  triggerKillEffect()
+  playKillSound(killStreak.value)
+
+  streakTimeLeft.value = STREAK_DURATION
+  const start = Date.now()
+
+  streakInterval = setInterval(() => {
+    const elapsed = Date.now() - start
+    streakTimeLeft.value = Math.max(STREAK_DURATION - elapsed, 0)
+
+    if (streakTimeLeft.value <= 0) {
+      clearInterval(streakInterval)
+      streakInterval = null
+    }
+  }, 16)
+
+  resetTimer = setTimeout(() => {
+    killStreak.value = 0
+    showKillEffect.value = false
+    streakTimeLeft.value = 0
+
+    if (streakInterval) {
+      clearInterval(streakInterval)
+      streakInterval = null
+    }
+  }, STREAK_DURATION)
+}
+
+
+function unlockAudio() {
+  if (audioUnlocked) return
+
+  killSounds.forEach(s => {
+    s.play().then(() => {
+      s.pause()
+      s.currentTime = 0
+    }).catch(() => {})
+  })
+
+  audioUnlocked = true
 }
 
 </script>
@@ -219,6 +328,21 @@ function stopTimer() {
       <span class="mag-count">{{ stats.clip }}</span>
       <span class="clip-count">{{ stats.ammo }}</span>
     </div>
+
+    <div v-if="showKillEffect && killStreak > 0" class="kill-effect-wrapper" :class="`streak-${killStreak}`">
+      <div class="kill-hex">
+        <div class="kill-ring"></div>
+        <div class="kill-core">
+          <span class="kill-text">{{ killStreak }}</span>
+        </div>
+      </div>
+
+      <div class="streak-bar">
+        <div class="streak-bar-fill" :style="{ width: streakPercent + '%' }"></div>
+      </div>
+    </div>
+
+
   </div>
 
 </template>
@@ -232,6 +356,7 @@ function stopTimer() {
   color: white;
 }
 
+/* ---------------- TOP HUD ---------------- */
 .hud-top {
   padding: 24px;
   display: flex;
@@ -267,6 +392,7 @@ function stopTimer() {
   color: #8f969f;
 }
 
+/* ---------------- TEAMS ---------------- */
 .team {
   display: flex;
   gap: 10px;
@@ -317,6 +443,7 @@ function stopTimer() {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------------- TIMER ---------------- */
 .hud-timer {
   display: flex;
   align-items: center;
@@ -353,6 +480,7 @@ function stopTimer() {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------------- STATS ---------------- */
 .hud-stats {
   display: flex;
   align-items: center;
@@ -393,12 +521,9 @@ function stopTimer() {
 }
 
 .divider {
-  width: 1px;
-  height: 40px;
   width: 2px;
   height: 40px;
   background: #a8aeb7;
-
 }
 
 .label {
@@ -412,6 +537,7 @@ function stopTimer() {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------------- BOTTOM HUD ---------------- */
 .hud-bottom {
   position: fixed;
   bottom: 32px;
@@ -430,7 +556,7 @@ function stopTimer() {
   gap: 10px;
 }
 
-.bar-row+.bar-row {
+.bar-row + .bar-row {
   margin-top: 10px;
 }
 
@@ -481,4 +607,154 @@ function stopTimer() {
 .fill.blue {
   background: linear-gradient(to right, #2563eb, #3b82f6);
 }
+
+/* ================= KILL EFFECT ================= */
+
+.kill-effect-wrapper {
+  position: fixed;
+  left: 50%;
+  bottom: 140px;
+  transform: translateX(-50%);
+  z-index: 45;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kill-hex {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  clip-path: polygon(
+    25% 6%, 75% 6%,
+    100% 50%,
+    75% 94%, 25% 94%,
+    0% 50%
+  );
+  border: 2px solid rgba(255, 40, 40, 0.85);
+  box-shadow: 0 0 35px rgba(255, 0, 0, 0.9);
+  animation: popInAggressive 0.25s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+
+.kill-ring {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 30, 30, 0.95);
+  animation: spinFast 1s linear infinite;
+  box-shadow: 0 0 40px rgba(255, 0, 0, 1);
+}
+
+.kill-core {
+  position: absolute;
+  inset: 48px;
+  background: radial-gradient(circle at center, #ff3b3b, #7a0000);
+  clip-path: polygon(
+    50% 0%,
+    85% 25%,
+    70% 100%,
+    30% 100%,
+    15% 25%
+  );
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 45px rgba(255, 0, 0, 1);
+}
+
+.kill-text {
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: white;
+}
+
+/* ---------------- STREAK SCALE ---------------- */
+.streak-1 { transform: scale(0.9); }
+.streak-2 { transform: scale(1.05); }
+
+.streak-3 {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 30px red);
+  animation: shake 0.18s linear;
+}
+
+.streak-4 {
+  transform: scale(1.25);
+  filter: drop-shadow(0 0 50px crimson);
+  animation: shake 0.18s linear;
+}
+
+.streak-5 {
+  transform: scale(1.35);
+  filter: drop-shadow(0 0 80px red);
+  animation: bloodPulse 0.6s infinite alternate;
+}
+
+/* ================= STREAK TIMER BAR ================= */
+
+.streak-bar {
+  width: 160px;
+  height: 6px;
+  margin-top: 12px;
+  background: rgba(80, 0, 0, 0.6);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+}
+
+.streak-bar-fill {
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    #ff1a1a,
+    #ff6b6b
+  );
+  transition: width 0.05s linear;
+  border-radius: 999px;
+}
+
+
+/* ---------------- ANIMATIONS ---------------- */
+
+@keyframes spinFast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes popInAggressive {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(40px);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.35) translateY(-5px);
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes bloodPulse {
+  from {
+    transform: scale(1.3);
+  }
+  to {
+    transform: scale(1.38);
+  }
+}
 </style>
+
