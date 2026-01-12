@@ -561,7 +561,7 @@ end)
 
 RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
     pedId = PlayerId()
-    local localPlayerName = GetPlayerName(pedId)
+    local localPlayerName = QBCore.Functions.GetPlayerData().charinfo.firstname .. " " .. QBCore.Functions.GetPlayerData().charinfo.lastname
     if (killerName == localPlayerName) then
         showKillMessage(killerName, victimName, 'killed')
     elseif (victimName == localPlayerName) then
