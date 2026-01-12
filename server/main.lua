@@ -115,9 +115,10 @@ RegisterNetEvent('i-tdm:server:send-kill-msg', function(killerId, victimId, map,
     local match = Dmaps[map].activeMatches[matchId]
     local killer = QBCore.Functions.GetPlayer(killerId)
     local victim = QBCore.Functions.GetPlayer(victimId)
-    local killerName = GetPlayerName(killerId)
-    local victimName = GetPlayerName(victimId)
     if not killer or not victim then return end
+
+    local killerName = killer.PlayerData.charinfo.firstname .. ' ' .. killer.PlayerData.charinfo.lastname
+    local victimName = victim.PlayerData.charinfo.firstname .. ' ' .. victim.PlayerData.charinfo.lastname
 
     if killerId == victimId then return end
     match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, name = killerName }
@@ -155,10 +156,10 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
 )
     local killer = QBCore.Functions.GetPlayer(killerId)
     local victim = QBCore.Functions.GetPlayer(victimId)
-    local killerName = GetPlayerName(killerId)
-    local victimName = GetPlayerName(victimId)
 
     if not killer or not victim then return end
+    local killerName = killer.PlayerData.charinfo.firstname .. ' ' .. killer.PlayerData.charinfo.lastname
+    local victimName = victim.PlayerData.charinfo.firstname .. ' ' .. victim.PlayerData.charinfo.lastname
 
     if killerId == victimId then return end -- suicide protection
 
@@ -241,8 +242,8 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
                 TriggerClientEvent(
                     'i-tdm:client:show-kill-msg-tdm',
                     playerData.source,
-                    GetPlayerName(killerId),
-                    GetPlayerName(victimId),
+                    killerName,
+                    victimName,
                     victimTeam,
                     match.redKills,
                     match.blueKills
@@ -476,7 +477,8 @@ QBCore.Functions.CreateCallback('i-tdm:get-time', function(source, cb, map, matc
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb, map, bucketId)
-    local creator = GetPlayerName(source)
+    local player = QBCore.Functions.GetPlayer(source)
+    local creator = player.PlayerData.charinfo.firstname .. ' ' .. player.PlayerData.charinfo.lastname
     local DMTimeInMs = Config.DMTime * 60 * 1000
     local endingTime = os.time() + (DMTimeInMs / 1000)
     local id = #Dmaps[map].activeMatches + 1
@@ -544,7 +546,8 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches-tdm', function(source,
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:server:createTDMatch', function(source, cb, map, bucketId, pass)
-    local creator = GetPlayerName(source)
+    local player = QBCore.Functions.GetPlayer(source)
+    local creator = player.PlayerData.charinfo.firstname .. ' ' .. player.PlayerData.charinfo.lastname
     local creatorId = source
     local id = #TDmaps[map].activeMatches + 1
     TDmaps[map].activeMatches[id] = {
