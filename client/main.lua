@@ -732,12 +732,16 @@ RegisterNUICallback('zoneDeath', function(data, cb)
             local _, lastWeapon = GetCurrentPedWeapon(ped)
             spawnToRandomPosDm(currDmap, lastWeapon)
         else
+            local _, lastWeapon = GetCurrentPedWeapon(ped)
+            setPedPropertiesTdm(true, lastWeapon)
             sendToTeamSpawn()
         end
     elseif data.reason == 'enemy-zone' then
         SetEntityHealth(PlayerPedId(), 101)
         SetPedCanRagdoll(ped, true)
         SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+        local _, lastWeapon = GetCurrentPedWeapon(ped)
+        setPedPropertiesTdm(true, lastWeapon)
         sendToTeamSpawn()
     end
 

@@ -642,6 +642,18 @@ QBCore.Commands.Add('leavedm', 'Leave Death Match/ Team Death Match', {}, false,
     TriggerClientEvent('i-tdm:client:stop-dm', source)
 end)
 
+-- --remove
+-- QBCore.Commands.Add('mockKill', 'mockKillDM', {{ name = 'arg 1', help = 'kill' }}, false, function(source, args)
+--     QBCore.Debug(args)
+--     TriggerClientEvent(
+--         'i-tdm:client:update-hud-stats',
+--         2,
+--         args[1],
+--         2,
+--         false
+--     )
+-- end)
+
 AddEventHandler("playerDropped", function()
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)

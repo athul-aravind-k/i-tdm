@@ -260,6 +260,7 @@ function goBack() {
   background: #22c55e;
   border-radius: 50%;
   padding: 6px;
+  display: flex;
 }
 
 .ms-check svg {

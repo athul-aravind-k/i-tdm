@@ -25,8 +25,8 @@ function calculateKD(k, d) {
 
 const sortedBlue = computed(() => {
   const players = props?.payload?.blueTeamPlayers
-  if (!Array.isArray(players)) return []
-  const result = [...players]
+  const list = Array.isArray(players) ? players : Object.values(players || {})
+  const result = list
     .filter(p => p != null)
     .sort((a, b) => (b?.kills ?? 0) - (a?.kills ?? 0))
   return result
@@ -34,8 +34,8 @@ const sortedBlue = computed(() => {
 
 const sortedRed = computed(() => {
   const players = props?.payload?.redTeamPlayers
-  if (!Array.isArray(players)) return []
-  const result = [...players]
+  const list = Array.isArray(players) ? players : Object.values(players || {})
+  const result = list
     .filter(p => p != null)
     .sort((a, b) => (b?.kills ?? 0) - (a?.kills ?? 0))
   return result
@@ -44,8 +44,8 @@ const sortedRed = computed(() => {
 const sortedPlayers = computed(() => {
   const players = props?.payload?.players
   console.log(JSON.stringify(players))
-  if (!Array.isArray(players)) return []
-  const result = [...players]
+  const list = Array.isArray(players) ? players : Object.values(players || {})
+  const result = list
     .filter(p => p != null)
     .sort((a, b) => (b?.kills ?? 0) - (a?.kills ?? 0))
   console.log('sortedPlayers:', JSON.stringify(result))
