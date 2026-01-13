@@ -220,7 +220,7 @@ Config.TDM_maps = {
                 vector2(-118.04163360596, -128.21299743652),
                 vector2(-113.35601043701, -120.43299102783)
             },
-            minZ = 90,
+            minZ = 100,
             maxZ = 120,
             name = 'blue-i-tdm-zone'
         },
@@ -595,7 +595,7 @@ Config.DM_maps = {
                 vector2(19.286571502686, 3621.8933105469)
             },
             name = "deathmatchzone7",
-            minZ = 40,
+            minZ = 30,
             maxZ = 80,
         },
         spawnpoints = {

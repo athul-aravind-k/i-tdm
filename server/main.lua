@@ -265,10 +265,6 @@ RegisterNetEvent("i-tdm:server:joinTeam", function(data)
     match.redTeam[citizenid] = nil
     match.blueTeam[citizenid] = nil
 
-    QBCore.Debug(data)
-
-    QBCore.Debug(Player.PlayerData)
-
     match[data.team .. "Team"][citizenid] = {
         source = src,
         name = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname,

@@ -159,7 +159,7 @@ local function toggleHud(bool, time, isTdm)
         message = {
             bool = bool,
             time = time,
-            totalTime = isTdm and time or (Config.DMTime * 60 * 1000),
+            totalTime = time,
             isTdm = isTdm
         }
     })
@@ -894,11 +894,11 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 Wait(1000)
 
                 local _, lastWeapon = GetCurrentPedWeapon(ped)
+                setPedPropertiesTdm(true, lastWeapon)
                 sendToTeamSpawn()
 
                 ClearPedBloodDamage(ped)
                 ResetPedMovementClipset(ped, 0.0)
-                setPedPropertiesTdm(true, lastWeapon)
 
                 dmRespawning = false
             end)
