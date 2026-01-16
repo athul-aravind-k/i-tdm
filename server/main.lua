@@ -472,6 +472,25 @@ QBCore.Functions.CreateCallback('i-tdm:get-time', function(source, cb, map, matc
     end
 end)
 
+QBCore.Functions.CreateCallback('i-tdm:get-player-stats', function(source, cb, map, matchId, isTDM)
+    local src = source
+    if isTDM then
+        local match = TDmaps[map].activeMatches[matchId]
+        if match and match.playerStats[src] then
+            cb(match.playerStats[src].kills or 0, match.playerStats[src].deaths or 0)
+        else
+            cb(0, 0)
+        end
+    else
+        local match = Dmaps[map].activeMatches[matchId]
+        if match and match.playerStats[src] then
+            cb(match.playerStats[src].kills or 0, match.playerStats[src].deaths or 0)
+        else
+            cb(0, 0)
+        end
+    end
+end)
+
 QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb, map, bucketId)
     local player = QBCore.Functions.GetPlayer(source)
     local creator = player.PlayerData.charinfo.firstname .. ' ' .. player.PlayerData.charinfo.lastname

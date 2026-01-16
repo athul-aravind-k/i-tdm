@@ -197,33 +197,37 @@ local function sendToDmatchMap(map, matchId, bucketId)
                 local spawnPoints = selectedMap.spawnpoints
                 local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
                 QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
-                    FreezeEntityPosition(ped, true)
-                    SwitchOutPlayer(ped, 0, 1)
-                    RequestCollisionAtCoord(spawnPoint.x, spawnPoint.y, spawnPoint.z)
-                    Wait(2000)
-                    SetEntityInvincible(ped, true)
-                    SetEntityCoordsNoOffset(ped, spawnPoint.x, spawnPoint.y, spawnPoint.z, false, false, false, true)
-
-                    while not HasCollisionLoadedAroundEntity(ped) do
+                    QBCore.Functions.TriggerCallback('i-tdm:get-player-stats', function(kills, deaths)
+                        DMKills = kills
+                        DMDeaths = deaths
+                        FreezeEntityPosition(ped, true)
+                        SwitchOutPlayer(ped, 0, 1)
                         RequestCollisionAtCoord(spawnPoint.x, spawnPoint.y, spawnPoint.z)
-                        Wait(0)
-                    end
+                        Wait(2000)
+                        SetEntityInvincible(ped, true)
+                        SetEntityCoordsNoOffset(ped, spawnPoint.x, spawnPoint.y, spawnPoint.z, false, false, false, true)
 
-                    NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.heading, true, true,
-                        false)
-                    ClearPedTasksImmediately(ped)
-                    Wait(2000)
-                    SwitchInPlayer(ped)
-                    toggleHud(true, timeLeft, false)
-                    setClothes()
-                    setPedProperties(false, nil)
-                    Wait(2000)
-                    FreezeEntityPosition(ped, false)
-                    SetEntityInvincible(ped, false)
-                    inDMatch = true
-                    InMatch = true
-                    TriggerEvent('wais:hudv6:client:hideHud', true)
-                    exports.ox_inventory:weaponWheel(true)
+                        while not HasCollisionLoadedAroundEntity(ped) do
+                            RequestCollisionAtCoord(spawnPoint.x, spawnPoint.y, spawnPoint.z)
+                            Wait(0)
+                        end
+
+                        NetworkResurrectLocalPlayer(spawnPoint.x, spawnPoint.y, spawnPoint.z, spawnPoint.heading, true, true,
+                            false)
+                        ClearPedTasksImmediately(ped)
+                        Wait(2000)
+                        SwitchInPlayer(ped)
+                        toggleHud(true, timeLeft, false)
+                        setClothes()
+                        setPedProperties(false, nil)
+                        Wait(2000)
+                        FreezeEntityPosition(ped, false)
+                        SetEntityInvincible(ped, false)
+                        inDMatch = true
+                        InMatch = true
+                        TriggerEvent('wais:hudv6:client:hideHud', true)
+                        exports.ox_inventory:weaponWheel(true)
+                    end, map, mId, false)
                 end, map, mId, false)
             else
                 notify('match Full', 'error')
@@ -421,18 +425,22 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     Wait(2000)
     SwitchInPlayer(ped)
     QBCore.Functions.TriggerCallback('i-tdm:get-time', function(timeLeft)
-        toggleHud(true, timeLeft, true)
-        inTDM = true
-        InMatch = true
-        exports.ox_inventory:weaponWheel(true)
-        TriggerEvent('wais:hudv6:client:hideHud', true)
-        setClothes(TdmTeam)
-        setPedPropertiesTdm(false, nil)
-        Wait(2000)
-        SetEntityInvincible(ped, false)
-        sendToTeamSpawn()
-        SetPedArmour(ped, 100)
-        SetEntityHealth(ped, 200)
+        QBCore.Functions.TriggerCallback('i-tdm:get-player-stats', function(kills, deaths)
+            DMKills = kills
+            DMDeaths = deaths
+            toggleHud(true, timeLeft, true)
+            inTDM = true
+            InMatch = true
+            exports.ox_inventory:weaponWheel(true)
+            TriggerEvent('wais:hudv6:client:hideHud', true)
+            setClothes(TdmTeam)
+            setPedPropertiesTdm(false, nil)
+            Wait(2000)
+            SetEntityInvincible(ped, false)
+            sendToTeamSpawn()
+            SetPedArmour(ped, 100)
+            SetEntityHealth(ped, 200)
+        end, mapName, matchId, true)
     end, mapName, matchId, true)
 
     local wasInsideOuter = nil
