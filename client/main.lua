@@ -104,12 +104,12 @@ local function createDeathMatchZone(map)
     end)
 end
 
-local function setPedProperties(clipReload, lastWeapon)
+local function setPedProperties(clipReload, lastWeapon, isTdm)
     local ped = PlayerPedId()
-    local weapons = Config.DM_Weapons
+    local weapons = isTdm and Config.TDM_Weapons[TDMweapon] or Config.DM_Weapons
     for i = 1, #weapons do
         GiveWeaponToPed(ped, weapons[i], 200, false, false)
-        if (clipReload) then
+        if clipReload then
             SetAmmoInClip(ped, weapons[i], 30)
         end
         if lastWeapon and weapons[i] == lastWeapon then
@@ -122,24 +122,11 @@ local function setPedProperties(clipReload, lastWeapon)
 end
 
 local function setPedPropertiesTdm(clipReload, lastWeapon)
-    local ped = PlayerPedId()
-    local weapons = Config.TDM_Weapons[TDMweapon]
-    for i = 1, #weapons do
-        GiveWeaponToPed(ped, weapons[i], 200, false, false)
-        if (clipReload) then
-            SetAmmoInClip(ped, weapons[i], 30)
-        end
-        if lastWeapon and weapons[i] == lastWeapon then
-            GiveWeaponToPed(ped, lastWeapon, 200, false, true)
-        end
-    end
-    TriggerServerEvent('hud:server:RelieveStress', 100)
-    SetPedArmour(ped, 100)
-    SetEntityHealth(ped, 200)
+    setPedProperties(clipReload, lastWeapon, true)
 end
 
 local function spawnToRandomPosDm(map, lastWeapon)
-    ped = PlayerPedId()
+    local ped = PlayerPedId()
     local selectedMap = Config.DM_maps[map]
     local spawnPoints = selectedMap.spawnpoints
     local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
@@ -172,13 +159,6 @@ local function notify(message, type)
         message = message,
     })
 end
-
--- local function GetPlayerTeamByServerId(id)
---     QBCore.Functions.TriggerCallback('i-tdm:get-player-team', function(timeLeft)
-
---     end, id)
--- end
-
 
 local function sendToDmatchMap(map, matchId, bucketId)
     local mId = tonumber(matchId)
@@ -240,6 +220,7 @@ end
 
 local function startDeathMatch(map)
     currDmap = map
+    local ped = PlayerPedId()
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
     QBCore.Functions.TriggerCallback('i-tdm:get-new-bucketId', function(bucketId)
         QBCore.Functions.TriggerCallback('i-tdm:server:createMatch', function(matchId)
@@ -286,6 +267,7 @@ end
 
 local function startTeamDeathMatch(map, password)
     currTDmap = map
+    local ped = PlayerPedId()
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
     QBCore.Functions.TriggerCallback('i-tdm:get-new-bucketId', function(bucketId)
         QBCore.Functions.TriggerCallback('i-tdm:server:createTDMatch', function(matchId, mapTable)
@@ -297,6 +279,7 @@ end
 
 local function joinTeamDeathMatch(matchId, map)
     currTDmap = map
+    local ped = PlayerPedId()
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
     QBCore.Functions.TriggerCallback('i-tdm:server:get-tdm-details', function(mapTable)
         activeTDMId = matchId
@@ -344,29 +327,17 @@ end
 local function sendToTeamSpawn()
     TriggerEvent("hospital:client:Revive")
     local ped = PlayerPedId()
-    if TdmTeam == "blue" then
-        local spawn = GetRandomPointInZone(TdmMap.blueZone)
-        FreezeEntityPosition(ped, true)
+    local zoneData = TdmTeam == "blue" and TdmMap.blueZone or TdmMap.redZone
+    local spawn = GetRandomPointInZone(zoneData)
+    FreezeEntityPosition(ped, true)
+    RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
+    SetEntityCoordsNoOffset(ped, spawn.x, spawn.y, spawn.z, false, false, false)
+    while not HasCollisionLoadedAroundEntity(ped) do
         RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
-        SetEntityCoordsNoOffset(ped, spawn.x, spawn.y, spawn.z, false, false, false)
-        while not HasCollisionLoadedAroundEntity(ped) do
-            RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
-            Wait(0)
-        end
-        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0, 1000, true)
-        FreezeEntityPosition(ped, false)
-    elseif TdmTeam == "red" then
-        local spawn = GetRandomPointInZone(TdmMap.redZone)
-        FreezeEntityPosition(ped, true)
-        RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
-        SetEntityCoordsNoOffset(ped, spawn.x, spawn.y, spawn.z, false, false, false)
-        while not HasCollisionLoadedAroundEntity(ped) do
-            RequestCollisionAtCoord(spawn.x, spawn.y, spawn.z)
-            Wait(0)
-        end
-        NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0, 1000, true)
-        FreezeEntityPosition(ped, false)
+        Wait(0)
     end
+    NetworkResurrectLocalPlayer(spawn.x, spawn.y, spawn.z, 0.0, 1000, true)
+    FreezeEntityPosition(ped, false)
 end
 
 local function StartHealing()
@@ -434,7 +405,7 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
             exports.ox_inventory:weaponWheel(true)
             TriggerEvent('wais:hudv6:client:hideHud', true)
             setClothes(TdmTeam)
-            setPedPropertiesTdm(false, nil)
+            setPedProperties(false, nil, true)
             Wait(2000)
             SetEntityInvincible(ped, false)
             sendToTeamSpawn()
@@ -568,13 +539,13 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
 end)
 
 RegisterNetEvent('i-tdm:client:show-kill-msg', function(killerName, victimName)
-    pedId = PlayerId()
-    local localPlayerName = QBCore.Functions.GetPlayerData().charinfo.firstname .. " " .. QBCore.Functions.GetPlayerData().charinfo.lastname
-    if (killerName == localPlayerName) then
+    local PlayerData = QBCore.Functions.GetPlayerData()
+    local localPlayerName = PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname
+    if killerName == localPlayerName then
         showKillMessage(killerName, victimName, 'killed')
-    elseif (victimName == localPlayerName) then
+    elseif victimName == localPlayerName then
         showKillMessage(killerName, victimName, 'dead')
-    elseif (killerName == victimName) then
+    elseif killerName == victimName then
         showKillMessage(killerName, victimName, 'suicide')
     else
         showKillMessage(killerName, victimName, 'other')
@@ -598,7 +569,8 @@ RegisterNetEvent('i-tdm:client:update-hud-stats', function(kills, deaths, heal)
     DMKills = kills
     DMDeaths = deaths
     if heal then
-        SetEntityHealth(PlayerPedId(), 200)
+        local ped = PlayerPedId()
+        SetEntityHealth(ped, 200)
         SetPedArmour(ped, 100)
     end
 end)
@@ -651,22 +623,13 @@ end)
 
 RegisterNUICallback('get-maps', function(data, cb)
     local maps = {}
-    if data.isTdm then
-        for _, v in pairs(Config.TDM_maps) do
-            maps[#maps + 1] = {
-                name = v.name,
-                label = v.label,
-                image = v.image
-            }
-        end
-    else
-        for _, v in pairs(Config.DM_maps) do
-            maps[#maps + 1] = {
-                name = v.name,
-                label = v.label,
-                image = v.image
-            }
-        end
+    local mapConfig = data.isTdm and Config.TDM_maps or Config.DM_maps
+    for _, v in pairs(mapConfig) do
+        maps[#maps + 1] = {
+            name = v.name,
+            label = v.label,
+            image = v.image
+        }
     end
     cb(maps)
 end)
@@ -730,26 +693,22 @@ RegisterNUICallback('delete-tdm', function(data, cb)
 end)
 
 RegisterNUICallback('zoneDeath', function(data, cb)
+    local ped = PlayerPedId()
+    SetEntityHealth(ped, 101)
+    SetPedCanRagdoll(ped, true)
+    SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
+    Wait(1000)
+    local _, lastWeapon = GetCurrentPedWeapon(ped)
+
     if data.reason == 'out-of-zone' then
-        -- kill player
-        SetEntityHealth(PlayerPedId(), 101)
-        SetPedCanRagdoll(ped, true)
-        SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
-        Wait(1000)
         if inDMatch then
-            local _, lastWeapon = GetCurrentPedWeapon(ped)
             spawnToRandomPosDm(currDmap, lastWeapon)
         else
-            local _, lastWeapon = GetCurrentPedWeapon(ped)
-            setPedPropertiesTdm(true, lastWeapon)
+            setPedProperties(true, lastWeapon, true)
             sendToTeamSpawn()
         end
     elseif data.reason == 'enemy-zone' then
-        SetEntityHealth(PlayerPedId(), 101)
-        SetPedCanRagdoll(ped, true)
-        SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
-        local _, lastWeapon = GetCurrentPedWeapon(ped)
-        setPedPropertiesTdm(true, lastWeapon)
+        setPedProperties(true, lastWeapon, true)
         sendToTeamSpawn()
     end
 
@@ -873,20 +832,6 @@ AddEventHandler('gameEventTriggered', function(event, data)
         end
 
         if inTDM then
-            -- local attackerPlayer = NetworkGetPlayerIndexFromPed(attacker)
-            -- if attackerPlayer ~= -1 then
-            --     local attackerSid = GetPlayerServerId(attackerPlayer)
-            --     local victimSid   = GetPlayerServerId(PlayerId())
-
-            --     print(GetPlayerServerId(attackerPlayer))
-            --     print(GetPlayerServerId(victimSid))
-
-            --     if GetPlayerTeamByServerId(attackerSid) == GetPlayerTeamByServerId(victimSid) then
-            --         CancelEvent()
-            --         return
-            --     end
-            -- end
-
             SetPedCanRagdoll(ped, true)
             SetPedToRagdoll(ped, 2000, 2000, 0, false, false, false)
 
@@ -910,7 +855,7 @@ AddEventHandler('gameEventTriggered', function(event, data)
                 Wait(1000)
 
                 local _, lastWeapon = GetCurrentPedWeapon(ped)
-                setPedPropertiesTdm(true, lastWeapon)
+                setPedProperties(true, lastWeapon, true)
                 sendToTeamSpawn()
 
                 ClearPedBloodDamage(ped)
@@ -937,7 +882,7 @@ end)
 
 CreateThread(function()
     while true do
-        Wait(0)
+        Wait(100)
         if inDMatch or inTDM then
             local ped = PlayerPedId()
             local hp = GetEntityHealth(ped)
@@ -954,11 +899,11 @@ end)
 
 CreateThread(function()
     while true do
-        Wait(0)
+        Wait(100)
         if TdmTeam and (InOwnSpawn or InEnemySpawn) then
             DisablePlayerFiring(PlayerId(), true)
-            DisableControlAction(0, 24, true) -- attack
-            DisableControlAction(0, 25, true) -- aim
+            DisableControlAction(0, 24, true)
+            DisableControlAction(0, 25, true)
         end
     end
 end)

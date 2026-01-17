@@ -84,6 +84,16 @@ local function formatDm(match)
     return playerStats
 end
 
+local function notifyAllTeamMembers(match, eventName, ...)
+    for _, team in ipairs({match.redTeam, match.blueTeam}) do
+        for _, playerData in pairs(team) do
+            if playerData and playerData.source then
+                TriggerClientEvent(eventName, playerData.source, ...)
+            end
+        end
+    end
+end
+
 local function SavePlayerStats(citizenid, name, kills, deaths)
     if not citizenid or not name then return end
 
@@ -147,13 +157,13 @@ RegisterNetEvent('i-tdm:server:add-participant', function(map, matchId)
 end)
 
 RegisterNetEvent('i-tdm:server:remove-participant', function(map, matchId)
-    if Dmaps[map].activeMatches[matchId] then
-        local participants = Dmaps[map].activeMatches[matchId].participants
-        for i = 1, #participants do
-            if participants[i] == source then
-                table.remove(participants, i)
-                break
-            end
+    local match = Dmaps[map].activeMatches[matchId]
+    if not match then return end
+    local participants = match.participants
+    for i = #participants, 1, -1 do
+        if participants[i] == source then
+            table.remove(participants, i)
+            break
         end
     end
 end)
@@ -169,25 +179,13 @@ RegisterNetEvent('i-tdm:server:remove-participant-tdm', function(map, matchId)
     match.redTeam[citizenid] = nil
     match.blueTeam[citizenid] = nil
 
-    if match.redTeam then
-        for _, playerData in pairs(match.redTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, map, tonumber(matchId), match)
-            end
-        end
-    end
-    if match.blueTeam then
-        for _, playerData in pairs(match.blueTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", -playerData.source, map, tonumber(matchId), match)
-            end
-        end
-    end
+    notifyAllTeamMembers(match, "i-tdm:client:updateLobby", map, tonumber(matchId), match)
 end)
 
 RegisterNetEvent('i-tdm:server:send-kill-msg', function(killerId, victimId, map, matchId)
-    local participants = Dmaps[map].activeMatches[matchId].participants
     local match = Dmaps[map].activeMatches[matchId]
+    if not match then return end
+    local participants = match.participants
     local killer = QBCore.Functions.GetPlayer(killerId)
     local victim = QBCore.Functions.GetPlayer(victimId)
     if not killer or not victim then return end
@@ -199,22 +197,24 @@ RegisterNetEvent('i-tdm:server:send-kill-msg', function(killerId, victimId, map,
     match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, name = killerName, citizenid = killer.PlayerData.citizenid }
     match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0, name = victimName, citizenid = victim.PlayerData.citizenid }
 
-    match.playerStats[killerId].kills = match.playerStats[killerId].kills + 1
-    match.playerStats[victimId].deaths = match.playerStats[victimId].deaths + 1
+    local killerStats = match.playerStats[killerId]
+    local victimStats = match.playerStats[victimId]
+    killerStats.kills = killerStats.kills + 1
+    victimStats.deaths = victimStats.deaths + 1
 
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
         victimId,
-        match.playerStats[victimId].kills,
-        match.playerStats[victimId].deaths,
+        victimStats.kills,
+        victimStats.deaths,
         false
     )
 
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
         killerId,
-        match.playerStats[killerId].kills,
-        match.playerStats[killerId].deaths,
+        killerStats.kills,
+        killerStats.deaths,
         true
     )
     for i = 1, #participants do
@@ -264,8 +264,10 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
     match.playerStats[victimId] = match.playerStats[victimId] or
         { kills = 0, deaths = 0, name = victimName, team = victimTeamCheck, citizenid = victim.PlayerData.citizenid }
 
-    match.playerStats[killerId].kills = match.playerStats[killerId].kills + 1
-    match.playerStats[victimId].deaths = match.playerStats[victimId].deaths + 1
+    local killerStats = match.playerStats[killerId]
+    local victimStats = match.playerStats[victimId]
+    killerStats.kills = killerStats.kills + 1
+    victimStats.deaths = victimStats.deaths + 1
 
     if victimTeam == "blue" then
         match.redKills = (match.redKills or 0) + 1
@@ -279,56 +281,25 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
         SaveTDMMatchStats(match)
         local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
         local blueTeamStats, redTeamStats = splitTeams(match)
-        if match.redTeam then
-            for _, playerData in pairs(match.redTeam) do
-                if playerData and playerData.source then
-                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, {}, 'tdm', winningTeam,
-                        blueTeamStats, redTeamStats)
-                    TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
-                end
-            end
-        end
-        if match.blueTeam then
-            for _, playerData in pairs(match.blueTeam) do
-                if playerData and playerData.source then
-                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, {}, 'tdm', winningTeam,
-                        blueTeamStats, redTeamStats)
-                    TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
-                end
-            end
-        end
+        notifyAllTeamMembers(match, "i-tdm:client:show-results", {}, 'tdm', winningTeam, blueTeamStats, redTeamStats)
+        notifyAllTeamMembers(match, "i-tdm:client:stop-dm")
     end
 
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
         killerId,
-        match.playerStats[killerId].kills,
-        match.playerStats[killerId].deaths
+        killerStats.kills,
+        killerStats.deaths
     )
 
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
         victimId,
-        match.playerStats[victimId].kills,
-        match.playerStats[victimId].deaths
+        victimStats.kills,
+        victimStats.deaths
     )
 
-    -- Broadcast kill feed
-    for _, teamData in pairs({ match.redTeam, match.blueTeam }) do
-        for _, playerData in pairs(teamData) do
-            if playerData.source then
-                TriggerClientEvent(
-                    'i-tdm:client:show-kill-msg-tdm',
-                    playerData.source,
-                    killerName,
-                    victimName,
-                    victimTeam,
-                    match.redKills,
-                    match.blueKills
-                )
-            end
-        end
-    end
+    notifyAllTeamMembers(match, 'i-tdm:client:show-kill-msg-tdm', killerName, victimName, victimTeam, match.redKills, match.blueKills)
 end)
 
 
@@ -359,20 +330,7 @@ RegisterNetEvent("i-tdm:server:joinTeam", function(data)
     }
 
     TriggerClientEvent("i-tdm:client:updateLobby", src, data.map, tonumber(data.matchId), match)
-    if match.redTeam then
-        for _, playerData in pairs(match.redTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, data.map, tonumber(data.matchId), match)
-            end
-        end
-    end
-    if match.blueTeam then
-        for _, playerData in pairs(match.blueTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, data.map, tonumber(data.matchId), match)
-            end
-        end
-    end
+    notifyAllTeamMembers(match, "i-tdm:client:updateLobby", data.map, tonumber(data.matchId), match)
 end)
 
 RegisterNetEvent("i-tdm:server:delete-tdm", function(data)
@@ -477,20 +435,7 @@ RegisterNetEvent("i-tdm:server:update-settings", function(settings)
         match.maxKillToWin = settings.maxKillToWin
     end
 
-    if match.redTeam then
-        for _, playerData in pairs(match.redTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, settings.map, settings.matchId, match)
-            end
-        end
-    end
-    if match.blueTeam then
-        for _, playerData in pairs(match.blueTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, settings.map, settings.matchId, match)
-            end
-        end
-    end
+    notifyAllTeamMembers(match, "i-tdm:client:updateLobby", settings.map, settings.matchId, match)
 end)
 
 RegisterNetEvent("i-tdm:server:kick-tdm-player", function(data)
@@ -509,20 +454,7 @@ RegisterNetEvent("i-tdm:server:kick-tdm-player", function(data)
     match.blueTeam[citizenid] = nil
 
     TriggerClientEvent("i-tdm:client:kick-player-tdm", data.playerId)
-    if match.redTeam then
-        for _, playerData in pairs(match.redTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, data.map, data.matchId, match)
-            end
-        end
-    end
-    if match.blueTeam then
-        for _, playerData in pairs(match.blueTeam) do
-            if playerData and playerData.source then
-                TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, data.map, data.matchId, match)
-            end
-        end
-    end
+    notifyAllTeamMembers(match, "i-tdm:client:updateLobby", data.map, data.matchId, match)
 end)
 
 
@@ -546,17 +478,13 @@ QBCore.Functions.CreateCallback('i-tdm:check-match-validity', function(source, c
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:get-time', function(source, cb, map, matchId, isTDM)
-    if isTDM then
-        local endTime = TDmaps[map].activeMatches[matchId].endingTime
-        local curTime = os.time()
-        local timeLeft = (math.floor(math.abs(endTime - curTime))) * 1000
-        cb(timeLeft)
-    else
-        local endTime = Dmaps[map].activeMatches[matchId].endingTime
-        local curTime = os.time()
-        local timeLeft = (math.floor(math.abs(endTime - curTime))) * 1000
-        cb(timeLeft)
+    local match = isTDM and TDmaps[map].activeMatches[matchId] or Dmaps[map].activeMatches[matchId]
+    if not match or not match.endingTime then
+        cb(0)
+        return
     end
+    local curTime = os.time()
+    cb(math.floor(math.abs(match.endingTime - curTime)) * 1000)
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:get-player-stats', function(source, cb, map, matchId, isTDM)
@@ -598,24 +526,21 @@ end)
 QBCore.Functions.CreateCallback('i-tdm:get-active-matches', function(source, cb)
     local activeMatches = {}
     for _, v in pairs(Config.DM_maps) do
-        for key, val in pairs(Dmaps[v.name].activeMatches) do
-            if Dmaps[v.name].activeMatches[key] ~= nil then
-                local curTime = os.time()
-                local timeLeft = (math.floor(math.abs(val.endingTime - curTime))) * 1000
-                activeMatches[#activeMatches + 1] = {
-                    matchId = val.id,
-                    map = v.name,
-                    bucketId = val.bucketId,
-                    timeLeft = timeLeft,
-                    members = #val.participants,
-                    creator = val.creator,
-                    mapLabel = v.label,
-                    maxMembers = v.maxMembers,
-                    image = v.image,
-                    playerStats = {}
-
-                }
-            end
+        for _, val in pairs(Dmaps[v.name].activeMatches) do
+            local curTime = os.time()
+            local timeLeft = math.floor(math.abs(val.endingTime - curTime)) * 1000
+            activeMatches[#activeMatches + 1] = {
+                matchId = val.id,
+                map = v.name,
+                bucketId = val.bucketId,
+                timeLeft = timeLeft,
+                members = #val.participants,
+                creator = val.creator,
+                mapLabel = v.label,
+                maxMembers = v.maxMembers,
+                image = v.image,
+                playerStats = {}
+            }
         end
     end
     cb(activeMatches)
@@ -624,23 +549,21 @@ end)
 QBCore.Functions.CreateCallback('i-tdm:get-active-matches-tdm', function(source, cb)
     local activeMatches = {}
     for _, v in pairs(Config.TDM_maps) do
-        for key, val in pairs(TDmaps[v.name].activeMatches) do
-            if TDmaps[v.name].activeMatches[key] ~= nil then
-                if TDmaps[v.name].activeMatches[key].started ~= true then
-                    activeMatches[#activeMatches + 1] = {
-                        matchId = val.id,
-                        map = v.name,
-                        bucketId = val.bucketId,
-                        members = (val.redTeam and #val.redTeam or 0) + (val.blueTeam and #val.blueTeam or 0),
-                        creator = val.creator,
-                        mapLabel = v.label,
-                        maxMembers = val.maxMembers,
-                        image = v.image,
-                        password = val.password,
-                        weapon = val.weapon,
-                        maxKillToWin = val.maxKillToWin or 10
-                    }
-                end
+        for _, val in pairs(TDmaps[v.name].activeMatches) do
+            if val.started ~= true then
+                activeMatches[#activeMatches + 1] = {
+                    matchId = val.id,
+                    map = v.name,
+                    bucketId = val.bucketId,
+                    members = (val.redTeam and #val.redTeam or 0) + (val.blueTeam and #val.blueTeam or 0),
+                    creator = val.creator,
+                    mapLabel = v.label,
+                    maxMembers = val.maxMembers,
+                    image = v.image,
+                    password = val.password,
+                    weapon = val.weapon,
+                    maxKillToWin = val.maxKillToWin or 10
+                }
             end
         end
     end
@@ -700,73 +623,45 @@ end)
 
 CreateThread(function()
     while true do
+        local curTime = os.time()
         for _, v in pairs(Config.DM_maps) do
-            for _, value in pairs(Dmaps[v.name].activeMatches) do
-                if Dmaps[v.name].activeMatches[value.id] then
-                    local curTime = os.time()
-                    if (Dmaps[v.name].activeMatches[value.id].endingTime <= curTime) then
-                        local participants = Dmaps[v.name].activeMatches[value.id].participants
-                        for i = #participants, 1, -1 do
-                            if QBCore.Functions.GetPlayer(tonumber(participants[i])) then
-                                local stats = formatDm(Dmaps[v.name].activeMatches[value.id])
-                                TriggerClientEvent("i-tdm:client:show-results", participants[i], stats, 'dm')
-                                TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
-                                table.remove(participants, i)
-                            end
+            local mapMatches = Dmaps[v.name].activeMatches
+            for matchId, match in pairs(mapMatches) do
+                if match and match.endingTime and match.endingTime <= curTime then
+                    local participants = match.participants
+                    for i = #participants, 1, -1 do
+                        if QBCore.Functions.GetPlayer(tonumber(participants[i])) then
+                            local stats = formatDm(match)
+                            TriggerClientEvent("i-tdm:client:show-results", participants[i], stats, 'dm')
+                            TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
+                            table.remove(participants, i)
                         end
-                        local match = Dmaps[v.name].activeMatches[value.id]
-                        for src, stat in pairs(match.playerStats or {}) do
-                            local citizenid = stat.citizenid
-                            local name = stat.name
-
-                            if citizenid and name then
-                                SavePlayerStats(
-                                    citizenid,
-                                    name,
-                                    stat.kills or 0,
-                                    stat.deaths or 0
-                                )
-                            end
-                        end
-
-                        Dmaps[v.name].activeMatches[value.id] = nil
                     end
+                    for src, stat in pairs(match.playerStats or {}) do
+                        local citizenid = stat.citizenid
+                        local name = stat.name
+                        if citizenid and name then
+                            SavePlayerStats(citizenid, name, stat.kills or 0, stat.deaths or 0)
+                        end
+                    end
+                    mapMatches[matchId] = nil
                 end
             end
         end
         for _, v in pairs(Config.TDM_maps) do
-            for _, value in pairs(TDmaps[v.name].activeMatches) do
-                local match = TDmaps[v.name].activeMatches[value.id]
-                if match and match.endingTime then
-                    local curTime = os.time()
-                    if match.endingTime <= curTime then
-                        SaveTDMMatchStats(match)
-                        local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
-                        local blueTeamStats, redTeamStats = splitTeams(match)
-                        if match.redTeam then
-                            for _, playerData in pairs(match.redTeam) do
-                                if playerData and playerData.source then
-                                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, {}, 'tdm',
-                                        winningTeam, blueTeamStats, redTeamStats)
-                                    TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
-                                end
-                            end
-                        end
-                        if match.blueTeam then
-                            for _, playerData in pairs(match.blueTeam) do
-                                if playerData and playerData.source then
-                                    TriggerClientEvent("i-tdm:client:show-results", playerData.source, {}, 'tdm',
-                                        winningTeam, blueTeamStats, redTeamStats)
-                                    TriggerClientEvent("i-tdm:client:stop-dm", playerData.source)
-                                end
-                            end
-                        end
-                        TDmaps[v.name].activeMatches[value.id] = nil
-                    end
+            local mapMatches = TDmaps[v.name].activeMatches
+            for matchId, match in pairs(mapMatches) do
+                if match and match.endingTime and match.endingTime <= curTime then
+                    SaveTDMMatchStats(match)
+                    local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
+                    local blueTeamStats, redTeamStats = splitTeams(match)
+                    notifyAllTeamMembers(match, "i-tdm:client:show-results", {}, 'tdm', winningTeam, blueTeamStats, redTeamStats)
+                    notifyAllTeamMembers(match, "i-tdm:client:stop-dm")
+                    mapMatches[matchId] = nil
                 end
             end
         end
-        Wait(0)
+        Wait(1000)
     end
 end)
 
@@ -785,32 +680,7 @@ AddEventHandler("playerDropped", function()
         for _, match in pairs(maps.activeMatches) do
             match.redTeam[citizenid] = nil
             match.blueTeam[citizenid] = nil
-            if match.redTeam then
-                for _, playerData in pairs(match.redTeam) do
-                    if playerData and playerData.source then
-                        TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, match.map, match.id, match)
-                    end
-                end
-            end
-            if match.blueTeam then
-                for _, playerData in pairs(match.blueTeam) do
-                    if playerData and playerData.source then
-                        TriggerClientEvent("i-tdm:client:updateLobby", playerData.source, match.map, match.id, match)
-                    end
-                end
-            end
+            notifyAllTeamMembers(match, "i-tdm:client:updateLobby", match.map, match.id, match)
         end
     end
-end)
-
--- --remove
-QBCore.Commands.Add('mockKill', 'mockKillDM', {{ name = 'arg 1', help = 'kill' }}, false, function(source, args)
-    QBCore.Debug(args)
-    TriggerClientEvent(
-        'i-tdm:client:update-hud-stats',
-        args[2],
-        args[1],
-        2,
-        false
-    )
 end)
