@@ -107,12 +107,10 @@ local function SaveTDMMatchStats(match)
     if not match or not match.playerStats then return end
 
     for src, stat in pairs(match.playerStats) do
-        local Player = QBCore.Functions.GetPlayer(tonumber(src))
-        if Player then
-            local citizenid = Player.PlayerData.citizenid
-            local name = Player.PlayerData.charinfo.firstname .. " " ..
-                Player.PlayerData.charinfo.lastname
+        local citizenid = stat.citizenid
+        local name = stat.name
 
+        if citizenid and name then
             SavePlayerStats(
                 citizenid,
                 name,
@@ -131,7 +129,21 @@ RegisterNetEvent('i-tdm:server:set-bucket', function(bucket)
 end)
 
 RegisterNetEvent('i-tdm:server:add-participant', function(map, matchId)
-    Dmaps[map].activeMatches[matchId].participants[#Dmaps[map].activeMatches[matchId].participants + 1] = source
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+
+    Dmaps[map].activeMatches[matchId].participants[#Dmaps[map].activeMatches[matchId].participants + 1] = src
+
+    local match = Dmaps[map].activeMatches[matchId]
+    if match then
+        match.playerStats[src] = {
+            kills = 0,
+            deaths = 0,
+            name = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname,
+            citizenid = Player.PlayerData.citizenid
+        }
+    end
 end)
 
 RegisterNetEvent('i-tdm:server:remove-participant', function(map, matchId)
@@ -184,11 +196,11 @@ RegisterNetEvent('i-tdm:server:send-kill-msg', function(killerId, victimId, map,
     local victimName = victim.PlayerData.charinfo.firstname .. ' ' .. victim.PlayerData.charinfo.lastname
 
     if killerId == victimId then return end
-    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, name = killerName }
-    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0, name = victimName }
+    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, name = killerName, citizenid = killer.PlayerData.citizenid }
+    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0, name = victimName, citizenid = victim.PlayerData.citizenid }
 
-    match.playerStats[killerId].kills += 1
-    match.playerStats[victimId].deaths += 1
+    match.playerStats[killerId].kills = match.playerStats[killerId].kills + 1
+    match.playerStats[victimId].deaths = match.playerStats[victimId].deaths + 1
 
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
@@ -248,12 +260,12 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
     if killerTeam == victimTeamCheck then return end
 
     match.playerStats[killerId] = match.playerStats[killerId] or
-        { kills = 0, deaths = 0, team = killerTeam, name = killerName }
+        { kills = 0, deaths = 0, team = killerTeam, name = killerName, citizenid = killer.PlayerData.citizenid }
     match.playerStats[victimId] = match.playerStats[victimId] or
-        { kills = 0, deaths = 0, name = victimName, team = victimTeamCheck }
+        { kills = 0, deaths = 0, name = victimName, team = victimTeamCheck, citizenid = victim.PlayerData.citizenid }
 
-    match.playerStats[killerId].kills += 1
-    match.playerStats[victimId].deaths += 1
+    match.playerStats[killerId].kills = match.playerStats[killerId].kills + 1
+    match.playerStats[victimId].deaths = match.playerStats[victimId].deaths + 1
 
     if victimTeam == "blue" then
         match.redKills = (match.redKills or 0) + 1
@@ -337,6 +349,15 @@ RegisterNetEvent("i-tdm:server:joinTeam", function(data)
         kills = 0,
         deaths = 0
     }
+
+    match.playerStats[src] = {
+        kills = 0,
+        deaths = 0,
+        team = data.team,
+        name = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname,
+        citizenid = citizenid
+    }
+
     TriggerClientEvent("i-tdm:client:updateLobby", src, data.map, tonumber(data.matchId), match)
     if match.redTeam then
         for _, playerData in pairs(match.redTeam) do
@@ -695,11 +716,10 @@ CreateThread(function()
                         end
                         local match = Dmaps[v.name].activeMatches[value.id]
                         for src, stat in pairs(match.playerStats or {}) do
-                            local Player = QBCore.Functions.GetPlayer(tonumber(src))
-                            if Player then
-                                local citizenid = Player.PlayerData.citizenid
-                                local name = Player.PlayerData.charinfo.firstname .. " " ..
-                                    Player.PlayerData.charinfo.lastname
+                            local citizenid = stat.citizenid
+                            local name = stat.name
+
+                            if citizenid and name then
                                 SavePlayerStats(
                                     citizenid,
                                     name,
