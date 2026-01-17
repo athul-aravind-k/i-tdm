@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   ArrowLeft,
   Trophy,
@@ -9,33 +9,35 @@ import {
   TrendingUp
 } from 'lucide-vue-next'
 
-//dummy data
-const players = ref([
-  { id: '1', name: 'Ghost', kills: 42, deaths: 18 },
-  { id: '2', name: 'Viper', kills: 36, deaths: 20 },
-  { id: '3', name: 'Rogue', kills: 30, deaths: 15 },
-  { id: '4', name: 'Nova', kills: 26, deaths: 22 },
-  { id: '5', name: 'Blaze', kills: 21, deaths: 25 },
-  { id: '6', name: 'Echo', kills: 18, deaths: 19 },
-  { id: '7', name: 'Phantom', kills: 15, deaths: 10 },
-  { id: '8', name: 'Shadow', kills: 14, deaths: 12 },
-  { id: '9', name: 'Storm', kills: 13, deaths: 15 },
-  { id: '10', name: 'Frost', kills: 12, deaths: 14 },
-  { id: '11', name: 'Blitz', kills: 11, deaths: 11 },
-  { id: '12', name: 'Hawk', kills: 10, deaths: 10 },
-  { id: '13', name: 'Raven', kills: 9, deaths: 9 },
-  { id: '14', name: 'Phoenix', kills: 8, deaths: 8 },
-  { id: '15', name: 'Titan', kills: 7, deaths: 7 },
-  { id: '16', name: 'Wraith', kills: 6, deaths: 6 },
-  { id: '17', name: 'Spectre', kills: 5, deaths: 5 },
-  { id: '18', name: 'Reaper', kills: 4, deaths: 4 },
-  { id: '19', name: 'Hunter', kills: 3, deaths: 3 },
-  { id: '20', name: 'Ranger', kills: 2, deaths: 2 }
-])
-
-const currentPlayerId = '4'
+const players = ref([])
+const currentPlayerName = ref('')
+const loading = ref(true)
 
 const emit = defineEmits(['change'])
+
+function getResourceName() {
+  return window.GetParentResourceName
+    ? GetParentResourceName()
+    : 'dev'
+}
+
+async function fetchLeaderboard() {
+  try {
+    const response = await fetch(`https://${getResourceName()}/get-leaderboard`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    const data = await response.json()
+    players.value = data.players || []
+    currentPlayerName.value = data.playerName || ''
+  } catch (error) {
+    console.error('Failed to fetch leaderboard:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 const sortedPlayers = computed(() =>
   [...players.value].sort((a, b) => b.kills - a.kills)
@@ -49,6 +51,10 @@ function getKD(player) {
 function goBack() {
   emit('change','main')
 }
+
+onMounted(() => {
+  fetchLeaderboard()
+})
 </script>
 
 <template>
@@ -73,56 +79,68 @@ function goBack() {
           <div class="lb-spacer"></div>
         </div>
 
-        <!-- Podium -->
-        <div class="lb-podium">
-          <!-- 2nd -->
-          <div v-if="sortedPlayers[1]" class="lb-podium-item second lb-anim-up delay-2">
-            <div class="lb-podium-icon silver">
-              <Medal />
-            </div>
-            <div class="lb-podium-card silver">
-              <p>{{ sortedPlayers[1].name }}</p>
-              <span>
-                <Target /> {{ sortedPlayers[1].kills }}
-              </span>
-              <small>K/D {{ getKD(sortedPlayers[1]) }}</small>
-            </div>
-            <div class="lb-podium-bar silver"></div>
-          </div>
-
-          <!-- 1st -->
-          <div v-if="sortedPlayers[0]" class="lb-podium-item first lb-anim-up delay-1">
-            <div class="lb-podium-icon gold">
-              <Trophy />
-            </div>
-            <div class="lb-podium-card gold">
-              <p>{{ sortedPlayers[0].name }}</p>
-              <span>
-                <Target /> {{ sortedPlayers[0].kills }}
-              </span>
-              <small>K/D {{ getKD(sortedPlayers[0]) }}</small>
-            </div>
-            <div class="lb-podium-bar gold"></div>
-          </div>
-
-          <!-- 3rd -->
-          <div v-if="sortedPlayers[2]" class="lb-podium-item third lb-anim-up delay-3">
-            <div class="lb-podium-icon bronze">
-              <Medal />
-            </div>
-            <div class="lb-podium-card bronze">
-              <p>{{ sortedPlayers[2].name }}</p>
-              <span>
-                <Target /> {{ sortedPlayers[2].kills }}
-              </span>
-              <small>K/D {{ getKD(sortedPlayers[2]) }}</small>
-            </div>
-            <div class="lb-podium-bar bronze"></div>
-          </div>
+        <!-- Loading State -->
+        <div v-if="loading" class="lb-loading">
+          <p>Loading leaderboard...</p>
         </div>
 
-        <!-- Table -->
-        <div class="lb-table llb-table-scroll delay-4">
+        <!-- Empty State -->
+        <div v-else-if="sortedPlayers.length === 0" class="lb-empty">
+          <p>No players on the leaderboard yet</p>
+          <small>Play matches to see your stats!</small>
+        </div>
+
+        <template v-else>
+          <!-- Podium -->
+          <div class="lb-podium">
+            <!-- 2nd -->
+            <div v-if="sortedPlayers[1]" class="lb-podium-item second lb-anim-up delay-2">
+              <div class="lb-podium-icon silver">
+                <Medal />
+              </div>
+              <div class="lb-podium-card silver">
+                <p>{{ sortedPlayers[1].name }}</p>
+                <span>
+                  <Target /> {{ sortedPlayers[1].kills }}
+                </span>
+                <small>K/D {{ getKD(sortedPlayers[1]) }}</small>
+              </div>
+              <div class="lb-podium-bar silver"></div>
+            </div>
+
+            <!-- 1st -->
+            <div v-if="sortedPlayers[0]" class="lb-podium-item first lb-anim-up delay-1">
+              <div class="lb-podium-icon gold">
+                <Trophy />
+              </div>
+              <div class="lb-podium-card gold">
+                <p>{{ sortedPlayers[0].name }}</p>
+                <span>
+                  <Target /> {{ sortedPlayers[0].kills }}
+                </span>
+                <small>K/D {{ getKD(sortedPlayers[0]) }}</small>
+              </div>
+              <div class="lb-podium-bar gold"></div>
+            </div>
+
+            <!-- 3rd -->
+            <div v-if="sortedPlayers[2]" class="lb-podium-item third lb-anim-up delay-3">
+              <div class="lb-podium-icon bronze">
+                <Medal />
+              </div>
+              <div class="lb-podium-card bronze">
+                <p>{{ sortedPlayers[2].name }}</p>
+                <span>
+                  <Target /> {{ sortedPlayers[2].kills }}
+                </span>
+                <small>K/D {{ getKD(sortedPlayers[2]) }}</small>
+              </div>
+              <div class="lb-podium-bar bronze"></div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="lb-table llb-table-scroll delay-4">
           <div class="lb-table-head">
             <div>Rank</div>
             <div>Player</div>
@@ -137,9 +155,9 @@ function goBack() {
             </div>
           </div>
 
-          <div v-for="(player, i) in sortedPlayers" :key="player.id" class="lb-row" :class="[
+          <div v-for="(player, i) in sortedPlayers" :key="i" class="lb-row" :class="[
             `rank-${i + 1}`,
-            player.id === currentPlayerId ? 'is-you' : ''
+            player.name === currentPlayerName ? 'is-you' : ''
           ]">
             <div class="lb-rank">
               <span v-if="i === 0">
@@ -159,6 +177,7 @@ function goBack() {
             <div class="lb-kd">{{ getKD(player) }}</div>
           </div>
         </div>
+        </template>
       </div>
     </div>
   </div>
@@ -553,5 +572,24 @@ function goBack() {
   display: flex;
   gap: 5px;
   align-items: center;
+}
+
+.lb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #888;
+  font-size: 18px;
+}
+
+.lb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #888;
+  gap: 8px;
 }
 </style>

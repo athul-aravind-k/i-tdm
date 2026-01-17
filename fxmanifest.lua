@@ -20,18 +20,6 @@ client_scripts {
 
 lua54 'yes'
 
--- files {
---     'html/*.html',
---     'html/*.css',
---     'html/*.js',
---     'html/assets/*.*',
---     'html/assets/maps/*.*'
--- }
-
--- ui_page {
---     'html/index.html'
--- }
-
 ui_page 'ui/dist/index.html'
 
 files {

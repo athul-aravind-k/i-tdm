@@ -17,6 +17,28 @@ local function initializeTable()
     end
 end
 
+local function initializeDatabase()
+    exports.oxmysql:execute([[
+        CREATE TABLE IF NOT EXISTS `i-tdm_player_stats` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            citizenid VARCHAR(50) NOT NULL UNIQUE,
+            name VARCHAR(100) NOT NULL,
+            kills INT DEFAULT 0,
+            deaths INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_kills (kills),
+            INDEX idx_citizenid (citizenid)
+        )
+    ]], {}, function(success)
+        if success then
+            print('[i-tdm] Database table i-tdm_player_stats initialized successfully')
+        else
+            print('[i-tdm] Failed to initialize database table')
+        end
+    end)
+end
+
 local function splitTeams(match)
     local blueTeamStats = {}
     local redTeamStats  = {}
@@ -61,6 +83,47 @@ local function formatDm(match)
 
     return playerStats
 end
+
+local function SavePlayerStats(citizenid, name, kills, deaths)
+    if not citizenid or not name then return end
+
+    exports.oxmysql:execute([[
+        INSERT INTO `i-tdm_player_stats` (citizenid, name, kills, deaths)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            name = VALUES(name),
+            kills = kills + VALUES(kills),
+            deaths = deaths + VALUES(deaths)
+    ]], {
+        citizenid,
+        name,
+        kills or 0,
+        deaths or 0
+    })
+end
+
+
+local function SaveTDMMatchStats(match)
+    if not match or not match.playerStats then return end
+
+    for src, stat in pairs(match.playerStats) do
+        local Player = QBCore.Functions.GetPlayer(tonumber(src))
+        if Player then
+            local citizenid = Player.PlayerData.citizenid
+            local name = Player.PlayerData.charinfo.firstname .. " " ..
+                Player.PlayerData.charinfo.lastname
+
+            SavePlayerStats(
+                citizenid,
+                name,
+                stat.kills or 0,
+                stat.deaths or 0
+            )
+        end
+    end
+end
+
+
 
 
 RegisterNetEvent('i-tdm:server:set-bucket', function(bucket)
@@ -184,8 +247,10 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
 
     if killerTeam == victimTeamCheck then return end
 
-    match.playerStats[killerId] = match.playerStats[killerId] or { kills = 0, deaths = 0, team = killerTeam, name = killerName }
-    match.playerStats[victimId] = match.playerStats[victimId] or { kills = 0, deaths = 0, name = victimName,team = victimTeamCheck }
+    match.playerStats[killerId] = match.playerStats[killerId] or
+        { kills = 0, deaths = 0, team = killerTeam, name = killerName }
+    match.playerStats[victimId] = match.playerStats[victimId] or
+        { kills = 0, deaths = 0, name = victimName, team = victimTeamCheck }
 
     match.playerStats[killerId].kills += 1
     match.playerStats[victimId].deaths += 1
@@ -199,6 +264,7 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
     end
 
     if match.redKills == match.maxKillToWin or match.blueKills == match.maxKillToWin then
+        SaveTDMMatchStats(match)
         local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
         local blueTeamStats, redTeamStats = splitTeams(match)
         if match.redTeam then
@@ -591,10 +657,21 @@ QBCore.Functions.CreateCallback('i-tdm:server:get-tdm-details', function(source,
     cb(activematch)
 end)
 
+QBCore.Functions.CreateCallback('i-tdm:get-leaderboard', function(source, cb)
+    exports.oxmysql:execute([[
+        SELECT name, kills, deaths
+        FROM `i-tdm_player_stats`
+        ORDER BY kills DESC
+        LIMIT 50
+    ]], {}, function(result)
+        cb(result or {})
+    end)
+end)
 
 CreateThread(function()
     while not tableInit do
         initializeTable()
+        initializeDatabase()
         tableInit = true
     end
 end)
@@ -611,11 +688,27 @@ CreateThread(function()
                         for i = #participants, 1, -1 do
                             if QBCore.Functions.GetPlayer(tonumber(participants[i])) then
                                 local stats = formatDm(Dmaps[v.name].activeMatches[value.id])
-                                TriggerClientEvent("i-tdm:client:show-results", participants[i],stats, 'dm')
+                                TriggerClientEvent("i-tdm:client:show-results", participants[i], stats, 'dm')
                                 TriggerClientEvent('i-tdm:client:stop-dm', participants[i])
                                 table.remove(participants, i)
                             end
                         end
+                        local match = Dmaps[v.name].activeMatches[value.id]
+                        for src, stat in pairs(match.playerStats or {}) do
+                            local Player = QBCore.Functions.GetPlayer(tonumber(src))
+                            if Player then
+                                local citizenid = Player.PlayerData.citizenid
+                                local name = Player.PlayerData.charinfo.firstname .. " " ..
+                                    Player.PlayerData.charinfo.lastname
+                                SavePlayerStats(
+                                    citizenid,
+                                    name,
+                                    stat.kills or 0,
+                                    stat.deaths or 0
+                                )
+                            end
+                        end
+
                         Dmaps[v.name].activeMatches[value.id] = nil
                     end
                 end
@@ -627,6 +720,7 @@ CreateThread(function()
                 if match and match.endingTime then
                     local curTime = os.time()
                     if match.endingTime <= curTime then
+                        SaveTDMMatchStats(match)
                         local winningTeam = match.redKills == match.maxKillToWin and 'red' or 'blue'
                         local blueTeamStats, redTeamStats = splitTeams(match)
                         if match.redTeam then
@@ -660,18 +754,6 @@ QBCore.Commands.Add('leavedm', 'Leave Death Match/ Team Death Match', {}, false,
     TriggerClientEvent('i-tdm:client:stop-dm', source)
 end)
 
--- --remove
--- QBCore.Commands.Add('mockKill', 'mockKillDM', {{ name = 'arg 1', help = 'kill' }}, false, function(source, args)
---     QBCore.Debug(args)
---     TriggerClientEvent(
---         'i-tdm:client:update-hud-stats',
---         2,
---         args[1],
---         2,
---         false
---     )
--- end)
-
 AddEventHandler("playerDropped", function()
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
@@ -699,4 +781,16 @@ AddEventHandler("playerDropped", function()
             end
         end
     end
+end)
+
+-- --remove
+QBCore.Commands.Add('mockKill', 'mockKillDM', {{ name = 'arg 1', help = 'kill' }}, false, function(source, args)
+    QBCore.Debug(args)
+    TriggerClientEvent(
+        'i-tdm:client:update-hud-stats',
+        args[2],
+        args[1],
+        2,
+        false
+    )
 end)

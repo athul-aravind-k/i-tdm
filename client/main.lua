@@ -756,6 +756,14 @@ RegisterNUICallback('zoneDeath', function(data, cb)
     cb('ok')
 end)
 
+RegisterNUICallback('get-leaderboard', function(data, cb)
+    QBCore.Functions.TriggerCallback('i-tdm:get-leaderboard', function(players)
+        local PlayerData = QBCore.Functions.GetPlayerData()
+        local playerName = PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname
+        cb({ players = players, playerName = playerName })
+    end)
+end)
+
 
 
 CreateThread(function()
