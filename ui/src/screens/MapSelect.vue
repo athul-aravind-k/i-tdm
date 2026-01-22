@@ -34,25 +34,13 @@ function getResourceName() {
 function confirmSelection() {
   if (!selectedMap.value) return
 
-  // DM
-  if (!isTdm) {
-    fetch(`https://${getResourceName()}/startDeathMatch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selectedMap: selectedMap.value
-      })
-    })
-    notificationStore.show('success', 'Starting Deathmatch');
-
-    emit('close')
-    return
-  }
-
-  // TDM → go to password screen
+  // Both DM and TDM → go to password screen
   emit('change', {
     screen: 'tdmPassword',
-    payload: { map: selectedMap.value }
+    payload: { 
+      map: selectedMap.value,
+      isTdm: isTdm
+    }
   })
 }
 

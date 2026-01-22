@@ -214,7 +214,7 @@ local function sendToDmatchMap(map, matchId, bucketId)
     end, map, matchId)
 end
 
-local function startDeathMatch(map)
+local function startDeathMatch(map, password)
     currDmap = map
     local ped = PlayerPedId()
     currBucket = GetEntityPopulationType(GetEntityCoords(ped))
@@ -222,7 +222,7 @@ local function startDeathMatch(map)
         QBCore.Functions.TriggerCallback('i-tdm:server:createMatch', function(matchId)
             activeMatchId = matchId
             sendToDmatchMap(map, matchId, bucketId)
-        end, map, bucketId)
+        end, map, bucketId, password)
     end)
 end
 
@@ -661,6 +661,13 @@ RegisterNUICallback("createTDM", function(data, cb)
     local password = data.password
     local map = data.map
     startTeamDeathMatch(map, password)
+    cb("ok")
+end)
+
+RegisterNUICallback("createDM", function(data, cb)
+    local password = data.password
+    local map = data.map
+    startDeathMatch(map, password)
     cb("ok")
 end)
 

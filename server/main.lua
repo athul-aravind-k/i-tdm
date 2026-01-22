@@ -509,7 +509,7 @@ QBCore.Functions.CreateCallback('i-tdm:get-player-stats', function(source, cb, m
     end
 end)
 
-QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb, map, bucketId)
+QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb, map, bucketId, password)
     local player = QBCore.Functions.GetPlayer(source)
     local creator = player.PlayerData.charinfo.firstname .. ' ' .. player.PlayerData.charinfo.lastname
     local DMTimeInMs = Config.DMTime * 60 * 1000
@@ -521,6 +521,7 @@ QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb,
         bucketId = bucketId,
         endingTime = endingTime,
         creator = creator,
+        password = password or '',
         playerStats = {}
     }
     cb(id)
@@ -542,6 +543,7 @@ QBCore.Functions.CreateCallback('i-tdm:get-active-matches', function(source, cb)
                 mapLabel = v.label,
                 maxMembers = v.maxMembers,
                 image = v.image,
+                password = val.password,
                 playerStats = {}
             }
         end

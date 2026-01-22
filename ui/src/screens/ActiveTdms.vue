@@ -54,7 +54,23 @@ function onJoinMatch(matchId,map,matchPass,pass,bucketId) {
       joinTDM(matchId,map)
     }
   }else{
-    fetch(`https://i-tdm/join-dm`, {
+    // DM mode - validate password if provided
+    if(pass?.length>0){
+      if(pass===matchPass){
+        joinDM(matchId, map, bucketId)
+      } else {
+        notificationStore.show('error', 'Invalid Password');
+        invalidPass.value = true
+        return
+      }
+    }else{
+      joinDM(matchId, map, bucketId)
+    }
+  }
+}
+
+function joinDM(matchId, map, bucketId) {
+  fetch(`https://i-tdm/join-dm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -63,9 +79,9 @@ function onJoinMatch(matchId,map,matchPass,pass,bucketId) {
       bucketId: bucketId
     })
   })
-
-    emit('close')
-  }
+  selectedMatch.value = null
+  password.value = ''
+  emit('close')
 }
 
 function joinTDM(matchId,map) {

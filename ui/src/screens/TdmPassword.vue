@@ -16,6 +16,7 @@ const password = ref('')
 const isPrivate = ref(false)
 
 const selectedMap = props.payload.map
+const isTdm = props.payload.isTdm !== false // Default to true for backward compatibility
 
 function getResourceName() {
   return window.GetParentResourceName
@@ -23,8 +24,9 @@ function getResourceName() {
     : 'dev'
 }
 
-function createTDM() {
-  fetch(`https://${getResourceName()}/createTDM`, {
+function createLobby() {
+  const endpoint = isTdm ? 'createTDM' : 'createDM'
+  fetch(`https://${getResourceName()}/${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -50,7 +52,7 @@ function selectPrivate() {
 
 function confirm() {
   if (isPrivate.value && !password.value) return;
-  createTDM()
+  createLobby()
 }
 
 </script>
