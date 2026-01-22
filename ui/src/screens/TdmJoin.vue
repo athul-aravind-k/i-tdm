@@ -24,7 +24,7 @@ const isOwner = computed(() => {
 // Computed property to check which team the player is currently in
 const currentPlayerTeam = computed(() => {
   if (!match.value || !playerId.value) return null
-  
+
   // Check if player is in blue team
   if (match.value.blueTeam) {
     for (const player of Object.values(match.value.blueTeam)) {
@@ -33,7 +33,7 @@ const currentPlayerTeam = computed(() => {
       }
     }
   }
-  
+
   // Check if player is in red team
   if (match.value.redTeam) {
     for (const player of Object.values(match.value.redTeam)) {
@@ -42,7 +42,7 @@ const currentPlayerTeam = computed(() => {
       }
     }
   }
-  
+
   return null
 })
 
@@ -152,12 +152,12 @@ function updatemaxKillToWin(value) {
 
 function startMatch() {
   if (!isOwner.value) return
-  if(!Object.keys(match.value?.blueTeam || {}).length && !Object.keys(match.value?.redTeam || {}).length){
+  if (!Object.keys(match.value?.blueTeam || {}).length && !Object.keys(match.value?.redTeam || {}).length) {
     notificationStore.show('error', 'No members joined in any team!');
     return
   }
 
-  if((Object.keys(match.value?.blueTeam || {}).length + Object.keys(match.value?.redTeam || {}).length) > match.value?.maxMembers){
+  if ((Object.keys(match.value?.blueTeam || {}).length + Object.keys(match.value?.redTeam || {}).length) > match.value?.maxMembers) {
     notificationStore.show('error', 'Joined players exceeds max members');
     return
   }
@@ -176,16 +176,16 @@ function startMatch() {
 }
 
 function goBack() {
-  if(isOwner){
+  if (isOwner.value) {
     fetch(`https://${getResourceName()}/delete-tdm`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      map: map.value,
-      matchId: matchId.value,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        map: map.value,
+        matchId: matchId.value,
+      })
     })
-  })
-  emit('close')
+    emit('close')
   }
   emit('change', 'main')
 }
@@ -224,12 +224,9 @@ function goBack() {
             <div class="tdm-roster">
               <div v-for="player in Object.values(match.blueTeam || {})" :key="player.source" class="tdm-player">
                 <div class="tdm-player-left">
-                  <Crown v-if="isOwner || match.creatorId===player.source" class="tdm-crown" />
+                  <Crown v-if="isOwner || match.creatorId === player.source" class="tdm-crown" />
                   <span>{{ player.name }}</span>
-                  <span
-                    v-if="player.source === playerId"
-                    class="tdm-you blue"
-                  >(You)</span>
+                  <span v-if="player.source === playerId" class="tdm-you blue">(You)</span>
                 </div>
 
                 <button v-if="isOwner && player.source !== match.creatorId" class="tdm-kick"
@@ -251,12 +248,9 @@ function goBack() {
             <div class="tdm-roster">
               <div v-for="player in Object.values(match.redTeam || {})" :key="player.source" class="tdm-player">
                 <div class="tdm-player-left">
-                  <Crown v-if="isOwner || match.creatorId===player.source " class="tdm-crown" />
+                  <Crown v-if="isOwner || match.creatorId === player.source" class="tdm-crown" />
                   <span>{{ player.name }}</span>
-                  <span
-                    v-if="player.source === playerId"
-                    class="tdm-you red"
-                  >(You)</span>
+                  <span v-if="player.source === playerId" class="tdm-you red">(You)</span>
                 </div>
 
                 <button v-if="isOwner && player.source !== match.creatorId" class="tdm-kick"
@@ -282,7 +276,7 @@ function goBack() {
               <label>
                 Total Time
                 <select :value="match.time" :disabled="!isOwner" @change="updateTime($event.target.value)">
-                  <option v-for="n in [ 5, 10, 15, 20, 30]" :key="n" :value="n">
+                  <option v-for="n in [5, 10, 15, 20, 30]" :key="n" :value="n">
                     {{ n }} Min
                   </option>
                 </select>
@@ -308,8 +302,9 @@ function goBack() {
               </label>
               <label>
                 Kill Target
-                <select :value="match.maxKillToWin" @change="updatemaxKillToWin($event.target.value)" :disabled="!isOwner">
-                  <option v-for="n in [10,20,30,40]" :key="n" :value="n">
+                <select :value="match.maxKillToWin" @change="updatemaxKillToWin($event.target.value)"
+                  :disabled="!isOwner">
+                  <option v-for="n in [10, 20, 30, 40]" :key="n" :value="n">
                     {{ n }}
                   </option>
                 </select>

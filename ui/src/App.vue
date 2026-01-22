@@ -38,6 +38,24 @@ function changeScreen(event) {
 }
 
 function closeUI() {
+  if (screen.value === 'tdmJoin' && payload.value) {
+    const matchId = payload.value.matchId
+    const map = payload.value.map
+    const playerId = payload.value.playerId
+    const creatorId = payload.value.mapTable?.creatorId
+
+    if (playerId === creatorId) {
+      fetch(`https://${getResourceName()}/delete-tdm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          map: map,
+          matchId: matchId,
+        })
+      })
+    }
+  }
+
   uiVisible.value = false
   screen.value = 'main'
   payload.value = null
@@ -96,7 +114,7 @@ onMounted(() => {
         uiVisible.value = true
         screen.value = 'matchend'
         break
-        case 'notify':
+      case 'notify':
         notificationStore.show(data.action, data.message);
         break
     }
@@ -118,33 +136,21 @@ const currentComponent = computed(() => {
     activeMatches: ActiveTdms,
     activeTdms: ActiveTdms,
     leaderboard: Leaderboard,
-    matchend: MatchEndScreen 
+    matchend: MatchEndScreen
   }[screen.value]
 })
 </script>
 
 <template>
   <!-- MAIN UI -->
-  <div 
-    v-if="uiVisible" 
-    @keyup.esc="closeUI" 
-    class="popup"
-    :style="(currentComponent === Leaderboard || currentComponent === MatchEndScreen) ? { height: '100%', width: '100%', overflowY: 'auto' } : {}"
-  >
-    <component
-      :is="currentComponent"
-      :payload="payload"
-      @change="changeScreen"
-      @close="closeUI"
-    />
+  <div v-if="uiVisible" @keyup.esc="closeUI" class="popup"
+    :style="(currentComponent === Leaderboard || currentComponent === MatchEndScreen) ? { height: '100%', width: '100%', overflowY: 'auto' } : {}">
+    <component :is="currentComponent" :payload="payload" @change="changeScreen" @close="closeUI" />
   </div>
 
   <!-- GLOBAL OVERLAYS -->
   <Toasts />
   <Hud />
-  <ZoneWarning/>
-  <UIToast
-    :notification="notificationStore.current"
-    @close="notificationStore.clear()"
-  />
+  <ZoneWarning />
+  <UIToast :notification="notificationStore.current" @close="notificationStore.clear()" />
 </template>
