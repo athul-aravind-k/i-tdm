@@ -290,14 +290,16 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
         'i-tdm:client:update-hud-stats',
         killerId,
         killerStats.kills,
-        killerStats.deaths
+        killerStats.deaths,
+        true
     )
 
     TriggerClientEvent(
         'i-tdm:client:update-hud-stats',
         victimId,
         victimStats.kills,
-        victimStats.deaths
+        victimStats.deaths,
+        false
     )
 
     notifyAllTeamMembers(match, 'i-tdm:client:show-kill-msg-tdm', killerName, victimName, victimTeam, match.redKills, match.blueKills)
