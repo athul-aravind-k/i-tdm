@@ -1,23 +1,47 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   ArrowLeft,
   Lock,
   Users,
   Shield,
-  Search
+  Search,
+  Clock
 } from 'lucide-vue-next'
 import { notificationStore } from '../components/uiNotificationStore'
 
 const props = defineProps({
   payload: Object
 })
-const emit = defineEmits(['change','close'])
+const emit = defineEmits(['change', 'close'])
 
 const searchTerm = ref('')
 const selectedMatch = ref(null)
 const password = ref('')
 const invalidPass = ref(false)
+const currentTime = ref(Date.now())
+let timerInterval = null
+
+// Update current time every second for live countdown
+onMounted(() => {
+  const now = Date.now()
+  // Add loadedAt timestamp to each match for accurate countdown
+  if (props.payload.matches) {
+    props.payload.matches.forEach(match => {
+      match.loadedAt = now
+    })
+  }
+
+  timerInterval = setInterval(() => {
+    currentTime.value = Date.now()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+  }
+})
 
 const filteredMatches = computed(() =>
   (props.payload.matches || []).filter(match =>
@@ -31,39 +55,39 @@ function handleJoin(match) {
   if (match.password && match.password?.length > 0) {
     selectedMatch.value = match
   } else {
-    onJoinMatch(match.matchId, match.map,null,null,match.bucketId)
+    onJoinMatch(match.matchId, match.map, null, null, match.bucketId)
   }
 }
 
 function handlePasswordSubmit() {
   if (selectedMatch.value && password.value) {
-    onJoinMatch(selectedMatch.value.matchId,selectedMatch.value.map, selectedMatch.value.password, password.value)
+    onJoinMatch(selectedMatch.value.matchId, selectedMatch.value.map, selectedMatch.value.password, password.value)
   }
 }
 
-function onJoinMatch(matchId,map,matchPass,pass,bucketId) {
-  if(props.payload.mode==='tdm'){
-    if(pass?.length>0){
-      if(pass===matchPass){
-        joinTDM(matchId,map)
+function onJoinMatch(matchId, map, matchPass, pass, bucketId) {
+  if (props.payload.mode === 'tdm') {
+    if (pass?.length > 0) {
+      if (pass === matchPass) {
+        joinTDM(matchId, map)
       } else {
         notificationStore.show('error', 'Invalid Password');
         invalidPass.value = true
       }
-    }else{
-      joinTDM(matchId,map)
+    } else {
+      joinTDM(matchId, map)
     }
-  }else{
+  } else {
     // DM mode - validate password if provided
-    if(pass?.length>0){
-      if(pass===matchPass){
+    if (pass?.length > 0) {
+      if (pass === matchPass) {
         joinDM(matchId, map, bucketId)
       } else {
         notificationStore.show('error', 'Invalid Password');
         invalidPass.value = true
         return
       }
-    }else{
+    } else {
       joinDM(matchId, map, bucketId)
     }
   }
@@ -84,16 +108,31 @@ function joinDM(matchId, map, bucketId) {
   emit('close')
 }
 
-function joinTDM(matchId,map) {
+function joinTDM(matchId, map) {
   fetch(`https://${GetParentResourceName()}/join-tdm-lobby`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       matchId,
-      map:map
+      map: map
     })
   })
 }
+
+function formatTimeLeft(match) {
+  if (!match || !match.timeLeft) return '0:00'
+  const timeLeftMs = match.timeLeft - (currentTime.value - (match.loadedAt || currentTime.value))
+
+  if (timeLeftMs <= 0) return '0:00'
+
+  const totalSeconds = Math.floor(timeLeftMs / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+
 </script>
 
 <template>
@@ -102,7 +141,7 @@ function joinTDM(matchId,map) {
 
       <!-- HEADER -->
       <div class="header">
-        <button class="back" @click="emit('change','join')">
+        <button class="back" @click="emit('change', 'join')">
           <ArrowLeft size="20" />
           Back
         </button>
@@ -119,26 +158,14 @@ function joinTDM(matchId,map) {
       <!-- SEARCH -->
       <div class="search">
         <Search class="search-icon" />
-        <input
-          class="input-atdm"
-          placeholder="Search by map or creator..."
-          v-model="searchTerm"
-        />
+        <input class="input-atdm" placeholder="Search by map or creator..." v-model="searchTerm" />
       </div>
 
       <!-- MATCH LIST -->
       <div class="match-list scrollable">
-        <div
-          v-for="match in filteredMatches"
-          :key="match.matchId"
-          class="match-card"
-          :class="{ full: match.members >= match.maxMembers }"
-        >
-          <img
-            :src="`assets/maps/${match.image}`"
-            :alt="match.mapLabel"
-            class="map-image"
-          />
+        <div v-for="match in filteredMatches" :key="match.matchId" class="match-card"
+          :class="{ full: match.members >= match.maxMembers }">
+          <img :src="`assets/maps/${match.image}`" :alt="match.mapLabel" class="map-image" />
 
           <div class="info">
             <div>
@@ -166,18 +193,20 @@ function joinTDM(matchId,map) {
                 {{ match.weapon }}
               </p>
             </div>
+
+            <div>
+              <span class="atdm-grey-text">Time Left</span>
+              <p>
+                <Clock size="14" />
+                {{ formatTimeLeft(match) }}
+              </p>
+            </div>
           </div>
 
           <div class="actions">
-            <Lock
-              v-if="match.password && match.password.length > 0"
-              class="lock"
-            />
+            <Lock v-if="match.password && match.password.length > 0" class="lock" />
 
-            <button
-              :disabled="match.members >= match.maxMembers"
-              @click="handleJoin(match)"
-            >
+            <button :disabled="match.members >= match.maxMembers" @click="handleJoin(match)">
               {{ match.members >= match.maxMembers ? 'Full' : 'Join' }}
             </button>
           </div>
@@ -190,7 +219,7 @@ function joinTDM(matchId,map) {
     </div>
 
     <!-- PASSWORD MODAL -->
-    <div v-if="selectedMatch" class="modal" @click="selectedMatch = null; invalidPass=false">
+    <div v-if="selectedMatch" class="modal" @click="selectedMatch = null; invalidPass = false">
       <div class="modal-box" @click.stop>
         <h3>
           <Lock />
@@ -199,28 +228,15 @@ function joinTDM(matchId,map) {
 
         <p>This match is private. Enter the password to join.</p>
 
-        <input
-          class="input"
-          type="password"
-          placeholder="Enter password"
-          v-model="password"
-          @keyup.enter="handlePasswordSubmit; invalidPass=false"
-          autofocus
-        />
+        <input class="input" type="password" placeholder="Enter password" v-model="password"
+          @keyup.enter="handlePasswordSubmit; invalidPass = false" autofocus />
 
         <div class="modal-actions">
-          <button
-            class="cancel"
-            @click="selectedMatch = null; password = '';invalidPass=false"
-          >
+          <button class="cancel" @click="selectedMatch = null; password = ''; invalidPass = false">
             Cancel
           </button>
 
-          <button
-            class="confirm"
-            :disabled="!password"
-            @click="handlePasswordSubmit"
-          >
+          <button class="confirm" :disabled="!password" @click="handlePasswordSubmit">
             Join
           </button>
         </div>
@@ -282,7 +298,7 @@ function joinTDM(matchId,map) {
 
 .atdm-grey-text {
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.875rem; 
+  font-size: 0.875rem;
   margin-bottom: 0.25rem;
 }
 
@@ -449,5 +465,4 @@ function joinTDM(matchId,map) {
 .scrollable::-webkit-scrollbar-track {
   background: transparent;
 }
-
 </style>
