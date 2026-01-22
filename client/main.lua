@@ -121,10 +121,6 @@ local function setPedProperties(clipReload, lastWeapon, isTdm)
     SetEntityHealth(ped, 200)
 end
 
-local function setPedPropertiesTdm(clipReload, lastWeapon)
-    setPedProperties(clipReload, lastWeapon, true)
-end
-
 local function spawnToRandomPosDm(map, lastWeapon)
     local ped = PlayerPedId()
     local selectedMap = Config.DM_maps[map]

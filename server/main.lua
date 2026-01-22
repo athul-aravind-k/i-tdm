@@ -147,9 +147,10 @@ RegisterNetEvent('i-tdm:server:add-participant', function(map, matchId)
 
     local match = Dmaps[map].activeMatches[matchId]
     if match then
+        local existingStats = match.playerStats[src]
         match.playerStats[src] = {
-            kills = 0,
-            deaths = 0,
+            kills = existingStats and existingStats.kills or 0,
+            deaths = existingStats and existingStats.deaths or 0,
             name = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname,
             citizenid = Player.PlayerData.citizenid
         }
