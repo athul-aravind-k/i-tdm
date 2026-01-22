@@ -43,7 +43,7 @@ function joinTDM() {
 }
 
 function goBack() {
-  emit('change','main')
+  emit('change', 'main')
 }
 
 </script>
@@ -52,10 +52,7 @@ function goBack() {
   <div class="gm-root">
     <!-- Background -->
     <div class="gm-bg">
-      <img
-        src="/assets/bg/modes.png"
-        alt="Background"
-      />
+      <img src="/assets/bg/modes.png" alt="Background" />
       <div class="gm-overlay"></div>
     </div>
 
@@ -76,15 +73,9 @@ function goBack() {
       <div class="gm-center">
         <div class="gm-grid">
           <!-- TEAM DEATHMATCH -->
-          <div
-            class="gm-card gm-anim-scale delay-1 blue"
-            @click="joinTDM"
-          >
+          <div class="gm-card gm-anim-scale delay-1 blue" @click="joinTDM">
             <div class="gm-image">
-              <img
-                src="/assets/bg/team.png"
-                alt="Team Deathmatch"
-              />
+              <img src="/assets/bg/team.png" alt="Team Deathmatch" />
               <div class="gm-gradient"></div>
 
               <div class="gm-icon blue">
@@ -101,15 +92,9 @@ function goBack() {
           </div>
 
           <!-- DEATHMATCH -->
-          <div
-            class="gm-card gm-anim-scale delay-2 red"
-            @click="joinDM"
-          >
+          <div class="gm-card gm-anim-scale delay-2 red" @click="joinDM">
             <div class="gm-image">
-              <img
-                src="/assets/bg/solo.png"
-                alt="Deathmatch"
-              />
+              <img src="/assets/bg/solo.png" alt="Deathmatch" />
               <div class="gm-gradient"></div>
 
               <div class="gm-icon red">
@@ -155,12 +140,10 @@ function goBack() {
 .gm-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.6),
-    rgba(0, 0, 0, 0.4),
-    rgba(0, 0, 0, 0.8)
-  );
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.6),
+      rgba(0, 0, 0, 0.4),
+      rgba(0, 0, 0, 0.8));
 }
 
 /* ===== CONTENT ===== */
@@ -263,12 +246,10 @@ function goBack() {
 .gm-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.9),
-    rgba(0, 0, 0, 0.5),
-    transparent
-  );
+  background: linear-gradient(to top,
+      rgba(0, 0, 0, 0.9),
+      rgba(0, 0, 0, 0.5),
+      transparent);
 }
 
 /* ===== ICON ===== */
@@ -279,7 +260,6 @@ function goBack() {
   width: 64px;
   height: 64px;
   border-radius: 8px;
-  backdrop-blur: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,6 +337,7 @@ function goBack() {
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -368,6 +349,7 @@ function goBack() {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
