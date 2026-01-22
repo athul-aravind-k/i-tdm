@@ -259,6 +259,7 @@ local function showJoinUi(map, mapTable)
         map = map,
         mapTable = mapTable
     })
+    SetNuiFocus(true, true)
 end
 
 local function startTeamDeathMatch(map, password)
@@ -285,6 +286,7 @@ end
 
 RegisterNetEvent("i-tdm:client:updateLobby", function(map, matchId, matchData)
     if InMatch then return end
+    if activeTDMId ~= matchId then return end
     showJoinUi(map, matchData);
 end);
 
@@ -493,6 +495,7 @@ RegisterNetEvent('i-tdm:client:stop-dm', function()
         InEnemySpawn = false
         HealThread = nil
         activeMatchId = nil
+        activeTDMId = nil
         DMDeaths = 0
         DMKills = 0
         for _, z in pairs(Zones) do
