@@ -10,7 +10,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'close'])
 
 const password = ref('')
 const isPrivate = ref(false)
@@ -35,6 +35,10 @@ function createLobby() {
     })
   })
   notificationStore.show('success', 'Lobby Created');
+
+  if (!isTdm) {
+    emit('close')
+  }
 }
 
 function goBack() {
