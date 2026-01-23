@@ -116,7 +116,6 @@ local function setPedProperties(clipReload, lastWeapon, isTdm)
             GiveWeaponToPed(ped, lastWeapon, 200, false, true)
         end
     end
-    TriggerServerEvent('hud:server:RelieveStress', 100)
     SetPedArmour(ped, 100)
     SetEntityHealth(ped, 200)
 end
@@ -741,22 +740,52 @@ CreateThread(function()
     SetBlockingOfNonTemporaryEvents(starterPed, true)
     FreezeEntityPosition(starterPed, true)
 
-    exports.ox_target:addBoxZone({
-        name = 'i-tdm-start',
-        coords = Config.startPed.targetZone, -- vector3
-        size = vec3(1, 1, Config.startPed.maxZ - Config.startPed.minZ),
-        rotation = Config.startPed.targetHeading,
-        debug = false,
-        options = {
-            {
-                type = 'client',
-                event = 'i-tdm:client:open-menu',
-                icon = 'fa-solid fa-gun',
-                label = 'Open TDM Menu',
-                distance = 1.5
+    -- Detect and use available targeting system
+    local targetSystem = nil
+    if GetResourceState('ox_target') == 'started' then
+        targetSystem = 'ox_target'
+    elseif GetResourceState('qb-target') == 'started' then
+        targetSystem = 'qb-target'
+    end
+
+    if targetSystem == 'ox_target' then
+        exports.ox_target:addBoxZone({
+            name = 'i-tdm-start',
+            coords = Config.startPed.targetZone,
+            size = vec3(1, 1, Config.startPed.maxZ - Config.startPed.minZ),
+            rotation = Config.startPed.targetHeading,
+            debug = false,
+            options = {
+                {
+                    type = 'client',
+                    event = 'i-tdm:client:open-menu',
+                    icon = 'fa-solid fa-gun',
+                    label = 'Open TDM Menu',
+                    distance = 1.5
+                }
             }
-        }
-    })
+        })
+    elseif targetSystem == 'qb-target' then
+        exports['qb-target']:AddBoxZone('i-tdm-start', Config.startPed.targetZone, 1.0, 1.0, {
+            name = 'i-tdm-start',
+            heading = Config.startPed.targetHeading,
+            debugPoly = false,
+            minZ = Config.startPed.minZ,
+            maxZ = Config.startPed.maxZ
+        }, {
+            options = {
+                {
+                    type = 'client',
+                    event = 'i-tdm:client:open-menu',
+                    icon = 'fa-solid fa-gun',
+                    label = 'Open TDM Menu',
+                }
+            },
+            distance = 1.5
+        })
+    else
+        print('^1[i-tdm] ERROR: No compatible targeting system found! Please install ox_target or qb-target.^0')
+    end
 end)
 
 CreateThread(function()
