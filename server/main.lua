@@ -241,7 +241,8 @@ RegisterNetEvent('i-tdm:server:send-kill-msg-tdm', function(
 
 
 
-    local match = TDmaps[map]?.activeMatches?[tonumber(matchId)]
+    if not TDmaps[map] then return end
+    local match = TDmaps[map].activeMatches[tonumber(matchId)]
     if not match then return end
 
     local killerTeam = nil
@@ -481,7 +482,7 @@ QBCore.Functions.CreateCallback('i-tdm:check-match-validity', function(source, c
 end)
 
 QBCore.Functions.CreateCallback('i-tdm:get-time', function(source, cb, map, matchId, isTDM)
-    local match = isTDM and TDmaps[map].activeMatches[matchId] or Dmaps[map].activeMatches[matchId]
+    local match = isTDM and TDmaps[map].activeMatches[tonumber(matchId)] or Dmaps[map].activeMatches[tonumber(matchId)]
     if not match or not match.endingTime then
         cb(0)
         return
@@ -493,14 +494,14 @@ end)
 QBCore.Functions.CreateCallback('i-tdm:get-player-stats', function(source, cb, map, matchId, isTDM)
     local src = source
     if isTDM then
-        local match = TDmaps[map].activeMatches[matchId]
+        local match = TDmaps[map].activeMatches[tonumber(matchId)]
         if match and match.playerStats[src] then
             cb(match.playerStats[src].kills or 0, match.playerStats[src].deaths or 0)
         else
             cb(0, 0)
         end
     else
-        local match = Dmaps[map].activeMatches[matchId]
+        local match = Dmaps[map].activeMatches[tonumber(matchId)]
         if match and match.playerStats[src] then
             cb(match.playerStats[src].kills or 0, match.playerStats[src].deaths or 0)
         else
@@ -517,6 +518,7 @@ QBCore.Functions.CreateCallback('i-tdm:server:createMatch', function(source, cb,
     local id = #Dmaps[map].activeMatches + 1
     Dmaps[map].activeMatches[id] = {
         id = id,
+        map = map,
         participants = {},
         bucketId = bucketId,
         endingTime = endingTime,
@@ -582,6 +584,7 @@ QBCore.Functions.CreateCallback('i-tdm:server:createTDMatch', function(source, c
     local id = #TDmaps[map].activeMatches + 1
     TDmaps[map].activeMatches[id] = {
         id = id,
+        map = map,
         redTeam = {},
         blueTeam = {},
         bucketId = bucketId,

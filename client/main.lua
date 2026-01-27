@@ -372,6 +372,7 @@ RegisterNetEvent("i-tdm:client:startTDM", function(data)
     local matchId = data.matchId
     local bId = data.bucketId
     local ped = PlayerPedId()
+    activeTDMId = matchId
     activeMatchId = matchId
     TDMMatchData = data.match
     TDMweapon = data.weapon

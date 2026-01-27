@@ -105,11 +105,17 @@ onMounted(() => {
     switch (data.type) {
       case 'toggle-hud':
         visible.value = data.message.bool
-        if(data?.message.isTdm){
-          isTDM.value = true 
+        if (data?.message.isTdm) {
+          isTDM.value = true
         }
         if (data.message.bool) {
           startTimerMs(data.message.totalTime)
+          // Reset scores when showing HUD
+          blueTeamKills.value = 0
+          redTeamKills.value = 0
+          prevKills.value = 0
+          stats.kills = 0
+          stats.deaths = 0
         } else {
           stopTimer()
           isTDM.value = false
@@ -127,12 +133,12 @@ onMounted(() => {
         }
         prevKills.value = stats.kills
         break
-}
+      }
 
       case 'kill-msg-tdm':
         redTeamKills.value = data?.message?.redKills
         blueTeamKills.value = data?.message?.blueKills
-      break
+        break
     }
   })
 })
@@ -175,7 +181,7 @@ function playKillSound(streak) {
   if (!sound) return
 
   sound.currentTime = 0
-  sound.play().catch(() => {})
+  sound.play().catch(() => { })
 }
 
 
@@ -228,7 +234,7 @@ function unlockAudio() {
     s.play().then(() => {
       s.pause()
       s.currentTime = 0
-    }).catch(() => {})
+    }).catch(() => { })
   })
 
   audioUnlocked = true
@@ -261,7 +267,7 @@ function unlockAudio() {
         </div>
       </div>
 
-      <div class="hud-timer" :class="timerState">
+      <div v-if="timerVisible" class="hud-timer" :class="timerState">
         <div class="timer-icon">
           <Clock />
         </div>
@@ -556,7 +562,7 @@ function unlockAudio() {
   gap: 10px;
 }
 
-.bar-row + .bar-row {
+.bar-row+.bar-row {
   margin-top: 10px;
 }
 
@@ -627,12 +633,10 @@ function unlockAudio() {
   width: 200px;
   height: 200px;
   position: relative;
-  clip-path: polygon(
-    25% 6%, 75% 6%,
-    100% 50%,
-    75% 94%, 25% 94%,
-    0% 50%
-  );
+  clip-path: polygon(25% 6%, 75% 6%,
+      100% 50%,
+      75% 94%, 25% 94%,
+      0% 50%);
   border: 2px solid rgba(255, 40, 40, 0.85);
   box-shadow: 0 0 35px rgba(255, 0, 0, 0.9);
   animation: popInAggressive 0.25s cubic-bezier(0.2, 1.8, 0.4, 1);
@@ -651,13 +655,11 @@ function unlockAudio() {
   position: absolute;
   inset: 48px;
   background: radial-gradient(circle at center, #ff3b3b, #7a0000);
-  clip-path: polygon(
-    50% 0%,
-    85% 25%,
-    70% 100%,
-    30% 100%,
-    15% 25%
-  );
+  clip-path: polygon(50% 0%,
+      85% 25%,
+      70% 100%,
+      30% 100%,
+      15% 25%);
   display: grid;
   place-items: center;
   box-shadow: 0 0 45px rgba(255, 0, 0, 1);
@@ -671,8 +673,13 @@ function unlockAudio() {
 }
 
 /* ---------------- STREAK SCALE ---------------- */
-.streak-1 { transform: scale(0.9); }
-.streak-2 { transform: scale(1.05); }
+.streak-1 {
+  transform: scale(0.9);
+}
+
+.streak-2 {
+  transform: scale(1.05);
+}
 
 .streak-3 {
   transform: scale(1.15);
@@ -706,11 +713,9 @@ function unlockAudio() {
 
 .streak-bar-fill {
   height: 100%;
-  background: linear-gradient(
-    to right,
-    #ff1a1a,
-    #ff6b6b
-  );
+  background: linear-gradient(to right,
+      #ff1a1a,
+      #ff6b6b);
   transition: width 0.05s linear;
   border-radius: 999px;
 }
@@ -719,8 +724,13 @@ function unlockAudio() {
 /* ---------------- ANIMATIONS ---------------- */
 
 @keyframes spinFast {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes popInAggressive {
@@ -729,32 +739,51 @@ function unlockAudio() {
     transform: scale(0.3) translateY(40px);
     filter: blur(4px);
   }
+
   60% {
     opacity: 1;
     transform: scale(1.35) translateY(-5px);
     filter: blur(0);
   }
+
   100% {
     transform: scale(1);
   }
 }
 
 @keyframes shake {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-3px); }
-  40% { transform: translateX(3px); }
-  60% { transform: translateX(-2px); }
-  80% { transform: translateX(2px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-3px);
+  }
+
+  40% {
+    transform: translateX(3px);
+  }
+
+  60% {
+    transform: translateX(-2px);
+  }
+
+  80% {
+    transform: translateX(2px);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes bloodPulse {
   from {
     transform: scale(1.3);
   }
+
   to {
     transform: scale(1.38);
   }
 }
 </style>
-
